@@ -1,0 +1,6 @@
+gas particles 								(type=0) (in co-moving code units)  
+dark matter/collisionless particles 		(type=1)  
+collisionless particles 					(type=2)  
+collisionless particles 					(type=3)  
+stars spawned from gas 						(type=4)  
+black holes (if active), or collisionless 	(type=5) 

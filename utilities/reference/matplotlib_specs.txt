@@ -1,0 +1,26 @@
+General Setup:
+
+plt.clf()
+f, axarr = plt.subplots(2, sharex=True, gridspec_kw = {'height_ratios':[2, 1]}) 
+#plt.rc('text', usetex=True)
+plt.rc('font', family='serif',size=12)
+
+
+
+Colors:
+blue		447fdd
+yellow		d19b30
+orange		515151
+grey		919191
+
+
+
+Plot Specs:
+ax.set_xscale('log')
+ax.set_yscale('log')	
+ax.legend(loc='best',prop={'size': 8},frameon=False)
+ax.set_xlabel('text',size=14)
+ax.set_ylabel('text',size=14)
+ax.set_title('text', size=8, loc='right')
+plt.tight_layout()
+

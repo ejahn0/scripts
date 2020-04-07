@@ -1,0 +1,45 @@
+HDF5 "star_600.hdf5" {
+FILE_CONTENTS {
+ group      /
+ dataset    /cosmology:baryon.fraction
+ dataset    /cosmology:hubble
+ dataset    /cosmology:n_s
+ dataset    /cosmology:omega_baryon
+ dataset    /cosmology:omega_curvature
+ dataset    /cosmology:omega_dm
+ dataset    /cosmology:omega_lambda
+ dataset    /cosmology:omega_matter
+ dataset    /cosmology:sigma_8
+ dataset    /cosmology:w
+ dataset    /id
+ dataset    /info:box.length
+ dataset    /info:box.length_div.by_h
+ dataset    /info:dark.particle.mass
+ dataset    /info:gas.particle.mass
+ dataset    /info:host.number
+ dataset    /lowres.mass.frac
+ dataset    /snapshot:index
+ dataset    /snapshot:redshift
+ dataset    /snapshot:scalefactor
+ dataset    /snapshot:time
+ dataset    /snapshot:time.hubble
+ dataset    /snapshot:time.lookback
+ dataset    /star.form.time.100
+ dataset    /star.form.time.50
+ dataset    /star.form.time.90
+ dataset    /star.form.time.95
+ dataset    /star.form.time.dif.68
+ dataset    /star.indices
+ dataset    /star.mass
+ dataset    /star.mass.neutral
+ dataset    /star.massfraction
+ dataset    /star.number
+ dataset    /star.position
+ dataset    /star.radius.50
+ dataset    /star.radius.90
+ dataset    /star.vel.circ.50
+ dataset    /star.vel.std
+ dataset    /star.vel.std.50
+ dataset    /star.velocity
+ }
+}

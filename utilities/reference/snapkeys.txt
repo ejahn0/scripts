@@ -1,0 +1,46 @@
+HDF5 "snapshot_465.0.hdf5" {
+FILE_CONTENTS {
+ group      /
+ group      /Header
+ group      /PartType0
+ dataset    /PartType0/Coordinates
+ dataset    /PartType0/Density
+ dataset    /PartType0/ElectronAbundance
+ dataset    /PartType0/InternalEnergy
+ dataset    /PartType0/Masses
+ dataset    /PartType0/Metallicity
+ dataset    /PartType0/NeutralHydrogenAbundance
+ dataset    /PartType0/ParticleChildIDsNumber
+ dataset    /PartType0/ParticleIDGenerationNumber
+ dataset    /PartType0/ParticleIDs
+ dataset    /PartType0/SmoothingLength
+ dataset    /PartType0/StarFormationRate
+ dataset    /PartType0/Velocities
+ 
+ group      /PartType1
+ dataset    /PartType1/Coordinates
+ dataset    /PartType1/Masses
+ dataset    /PartType1/ParticleChildIDsNumber
+ dataset    /PartType1/ParticleIDGenerationNumber
+ dataset    /PartType1/ParticleIDs
+ dataset    /PartType1/Velocities
+
+ group      /PartType2
+ dataset    /PartType2/Coordinates
+ dataset    /PartType2/Masses
+ dataset    /PartType2/ParticleChildIDsNumber
+ dataset    /PartType2/ParticleIDGenerationNumber
+ dataset    /PartType2/ParticleIDs
+ dataset    /PartType2/Velocities
+
+ group      /PartType4
+ dataset    /PartType4/Coordinates
+ dataset    /PartType4/Masses
+ dataset    /PartType4/Metallicity
+ dataset    /PartType4/ParticleChildIDsNumber
+ dataset    /PartType4/ParticleIDGenerationNumber
+ dataset    /PartType4/ParticleIDs
+ dataset    /PartType4/StellarFormationTime
+ dataset    /PartType4/Velocities
+ }
+}
