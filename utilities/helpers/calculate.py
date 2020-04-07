@@ -284,3 +284,835 @@ def density_v_time():
 		dark_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=1)/h
 		header = snapHDF5.snapshot_header(snapfile)
 	
+
+
+def calculate_mass_in_r(sim):
+	snapdir = '/mainvol/ejahn/smuggle/output/live_halo/'
+	h=0.7
+	all_time = np.array([])
+
+	print('analyzing simulation: '+sim+'\n\n------------------------------------------------\n\n')
+
+	for n in np.arange(2,201):
+		printthing = 'calculating snapshot '+str(n).zfill(3)+'/200'
+		sys.stdout.write(printthing)
+		sys.stdout.flush()
+		sys.stdout.write("\b" * (len(printthing)))
+
+		fname = d.smuggledir + sim + '/snapshot_' + str(n).zfill(3)
+		header = snapHDF5.snapshot_header(fname)
+		all_time = np.append(all_time, header.time)
+
+		snapfile = snapdir+sim+'/snapshot_'+str(n).zfill(3)
+		darkmass = snapHDF5.read_block(snapfile, 'MASS', parttype=1)*(1.e10)/h
+		dark_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=1)/h
+
+		gasmass = snapHDF5.read_block(snapfile, 'MASS', parttype=0)*(1.e10)/h
+		gas_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=0)/h
+
+		#-calculate-center-of-mass---------------------------------------------
+		x_cm = np.sum(dark_pos[:,0] * darkmass) / np.sum(darkmass)
+		y_cm = np.sum(dark_pos[:,1] * darkmass) / np.sum(darkmass)
+		z_cm = np.sum(dark_pos[:,2] * darkmass) / np.sum(darkmass)
+		dark_cm = np.array([x_cm,y_cm,z_cm]).T
+
+		d_dark = np.linalg.norm(dark_pos-dark_cm, axis=1)
+		d_gas = np.linalg.norm(gas_pos-dark_cm, axis=1)
+
+		#-calculate-mass-in-different-radii------------------------------------
+		mdark_in_01 = np.sum(darkmass[(d_dark < 0.1)])
+		mdark_in_02 = np.sum(darkmass[(d_dark < 0.2)])
+		mdark_in_05 = np.sum(darkmass[(d_dark < 0.5)])
+		mdark_in_1 = np.sum(darkmass[(d_dark < 1)])
+		mdark_in_2 = np.sum(darkmass[(d_dark < 2)])
+		mdark_in_5 = np.sum(darkmass[(d_dark < 5)])
+
+		mgas_in_01 = np.sum(gasmass[(d_gas < 0.1)])
+		mgas_in_02 = np.sum(gasmass[(d_gas < 0.2)])
+		mgas_in_05 = np.sum(gasmass[(d_gas < 0.5)])
+		mgas_in_1 = np.sum(gasmass[(d_gas < 1)])
+		mgas_in_2 = np.sum(gasmass[(d_gas < 2)])
+		mgas_in_5 = np.sum(gasmass[(d_gas < 5)])
+
+		if n==2:
+			darkmasses_in_Rs = np.array([mdark_in_01,mdark_in_02,mdark_in_05,mdark_in_1,mdark_in_2,mdark_in_5])
+			gasmasses_in_Rs = np.array([mgas_in_01,mgas_in_02,mgas_in_05,mgas_in_1,mgas_in_2,mgas_in_5])
+		else:
+			this_darkmasses_in_Rs = np.array([mdark_in_01,mdark_in_02,mdark_in_05,mdark_in_1,mdark_in_2,mdark_in_5])
+			this_gasmasses_in_Rs = np.array([mgas_in_01,mgas_in_02,mgas_in_05,mgas_in_1,mgas_in_2,mgas_in_5])
+
+			darkmasses_in_Rs = np.vstack((darkmasses_in_Rs,this_darkmasses_in_Rs))
+			gasmasses_in_Rs = np.vstack((gasmasses_in_Rs,this_gasmasses_in_Rs))
+
+	datfname = d.datdir+'mass_in_r_'+sim+'.hdf5'
+	print('\nsaving file: '+datfname+'\n\n')
+	newfile = h5py.File(datfname,'w')
+	newfile.create_dataset('darkmasses_in_Rs',data=darkmasses_in_Rs)
+	newfile.create_dataset('gasmasses_in_Rs',data=gasmasses_in_Rs)
+	newfile.create_dataset('time',data=all_time)
+	newfile.close()
+
+def calculate_sigma(sim):
+	# snapdir = '/mainvol/ejahn/smuggle/output/live_halo/'
+
+	if not(sim in models):
+		raise ValueError('please choose a sim in models')
+
+	i = np.where(models==sim)[0][0]
+
+	h=0.7
+	all_time = np.array([])
+	# drange = np.logspace(-1,2,100)
+	print('analyzing simulation: '+sim)
+
+	sigmafile = h5py.File(d.datdir+'sigma_v_annuli'+savenames[i]+'.hdf5','w')
+
+	# distances = np.array([0.1,0.2,0.5,1,2,5])
+	distances = np.array([0.1,0.3,0.5,1,2,4])
+
+	for n in np.arange(10,201):
+		printthing = 'calculating snapshot '+str(n).zfill(3)+'/200'
+		sys.stdout.write(printthing)
+		sys.stdout.flush()
+		if not(n==200):
+			sys.stdout.write("\b" * (len(printthing)))
+
+		#----------------------------------------------------------------------
+		#---read-simulation-data-----------------------------------------------
+		#----------------------------------------------------------------------
+		snapfile = snapdir+sim+'/snapshot_'+str(n).zfill(3)
+		darkmass = snapHDF5.read_block(snapfile, 'MASS', parttype=1)*(1.e10)/h
+		dark_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=1)/h
+		dark_vel = snapHDF5.read_block(snapfile, 'VEL ', parttype=1)
+
+		starmass = snapHDF5.read_block(snapfile, 'MASS', parttype=4)*(1.e10)/h
+		star_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=4)/h
+		star_vel = snapHDF5.read_block(snapfile, 'VEL ', parttype=4)
+
+		gasmass = snapHDF5.read_block(snapfile, 'MASS', parttype=0)*(1.e10)/h
+		gas_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=0)/h
+		gas_vel = snapHDF5.read_block(snapfile, 'VEL ', parttype=0)
+
+		rho = snapHDF5.read_block(snapfile,"RHO ",parttype=0)
+		rho *= m.Xh/m.PROTONMASS*m.UnitDensity_in_cgs  #now in cm^{-3} h^3 
+		U = snapHDF5.read_block(snapfile,"U   ",parttype=0)
+		Nelec = snapHDF5.read_block(snapfile,"NE  ",parttype=0)
+		MeanWeight= 4.0/(3*m.Xh+1+4*m.Xh*Nelec) * m.PROTONMASS
+		temp = MeanWeight/m.BOLTZMANN * (m.gamma-1) * U * m.UnitEnergy_in_cgs/ m.UnitMass_in_g
+
+		#----------------------------------------------------------------------
+		#---center-coordinates-on-CoM------------------------------------------
+		#----------------------------------------------------------------------
+		x_cm = np.sum(dark_pos[:,0] * darkmass) / np.sum(darkmass)
+		y_cm = np.sum(dark_pos[:,1] * darkmass) / np.sum(darkmass)
+		z_cm = np.sum(dark_pos[:,2] * darkmass) / np.sum(darkmass)
+		dark_cm = np.array([x_cm,y_cm,z_cm]).T
+
+		vx_cm = np.sum(dark_vel[:,0] * darkmass) / np.sum(darkmass)
+		vy_cm = np.sum(dark_vel[:,1] * darkmass) / np.sum(darkmass)
+		vz_cm = np.sum(dark_vel[:,2] * darkmass) / np.sum(darkmass)
+		dark_v_cm = np.array([vx_cm,vy_cm,vz_cm]).T
+
+		d_star = np.linalg.norm(star_pos-dark_cm, axis=1)
+		d_gas  = np.linalg.norm(gas_pos-dark_cm, axis=1)
+
+		star_pos = star_pos-dark_cm
+		gas_pos = gas_pos-dark_cm
+		star_vel = star_vel-dark_v_cm
+		gas_vel = gas_vel-dark_v_cm
+
+		r_star = np.sqrt(star_pos[:,0]**2 + star_pos[:,1]**2)
+		r_gas = np.sqrt(gas_pos[:,0]**2 + gas_pos[:,1]**2)
+
+		for i in range(len(distances)-1):
+			#-----------------------------------------------------------
+			#---calculate-sigma-for-stars-------------------------------
+			#-----------------------------------------------------------
+			sel_stars_in_d = (r_star > distances[i]) & (r_star < distances[i+1])
+			Nstar = np.count_nonzero(sel_stars_in_d)
+			if Nstar < 2:
+				sigma_rho = 0
+				sigma_phi = 0
+				sigma_z   = 0
+			else:
+				star_vel_in_d = star_vel[sel_stars_in_d]
+				star_pos_in_d = star_pos[sel_stars_in_d]
+				
+				x = star_pos_in_d[:,0]
+				y = star_pos_in_d[:,1]
+				z = star_pos_in_d[:,2]
+				vx = star_vel_in_d[:,0]
+				vy = star_vel_in_d[:,1]
+				vz = star_vel_in_d[:,2]
+
+				rho = np.sqrt(x**2 + y**2)
+				phi = np.arctan(x/y)
+
+				vrho = (x*vx + y*vy)*(np.cos(phi) + np.sin(phi))/rho
+				vphi = (x*vy - y*vx)*(np.cos(phi) - np.sin(phi))/rho
+
+				vbar_rho = np.mean(vrho)
+				vbar_phi = np.mean(vphi)
+				vbar_z = np.mean(vz)
+
+				sigma_rho   = np.sqrt(1./(Nstar-1.) * np.sum((vrho - vbar_rho)**2.))
+				sigma_phi = np.sqrt(1./(Nstar-1.) * np.sum((vphi - vbar_phi)**2.))
+				sigma_z   = np.sqrt(1./(Nstar-1.) * np.sum((vz - vbar_z)**2.))
+
+			if i == 0:
+				sigma_star = np.array([sigma_rho,sigma_phi,sigma_z])
+			else:
+				sigma_star = np.vstack((sigma_star,np.array([sigma_rho,sigma_phi,sigma_z])))
+
+			#-----------------------------------------------------------
+			#---calculate-sigma-for-gas---------------------------------
+			#-----------------------------------------------------------
+			sel_gas_in_d = (r_gas > distances[i]) & (r_gas < distances[i+1])
+			Ngas = np.count_nonzero(sel_gas_in_d)
+			
+			sel_cold = (r_gas > distances[i]) & (r_gas < distances[i+1]) & (temp < 2e3)
+			Ncold = np.count_nonzero(sel_cold)
+
+			#---calculate-sigma-for-all-gas----------------------------
+			if Ngas < 2:
+				sigma_rho = 0
+				sigma_phi = 0
+				sigma_z   = 0
+			else:
+				gas_vel_in_d = gas_vel[sel_gas_in_d]
+				gas_pos_in_d = gas_pos[sel_gas_in_d]
+				x = gas_pos_in_d[:,0]
+				y = gas_pos_in_d[:,1]
+				z = gas_pos_in_d[:,2]
+				vx = gas_vel_in_d[:,0]
+				vy = gas_vel_in_d[:,1]
+				vz = gas_vel_in_d[:,2]
+
+				rho = np.sqrt(x**2 + y**2)
+				phi = np.arctan(x/y)
+
+				vrho = (x*vx + y*vy)*(np.cos(phi) + np.sin(phi))/rho
+				vphi = (x*vy - y*vx)*(np.cos(phi) - np.sin(phi))/rho
+
+				vbar_rho = np.mean(vrho)
+				vbar_phi = np.mean(vphi)
+				vbar_z = np.mean(vz)
+
+				sigma_rho   = np.sqrt(1./(Ngas-1.) * np.sum((vrho - vbar_rho)**2.))
+				sigma_phi = np.sqrt(1./(Ngas-1.) * np.sum((vphi - vbar_phi)**2.))
+				sigma_z   = np.sqrt(1./(Ngas-1.) * np.sum((vz - vbar_z)**2.))
+
+			#---calculate-sigma-for-cold-gas---------------------------
+			if Ncold < 2:
+				sigma_rho_cold = 0
+				sigma_phi_cold = 0
+				sigma_z_cold   = 0
+			else:
+				gas_vel_in_d = gas_vel[sel_cold]
+				gas_pos_in_d = gas_pos[sel_cold]
+				x = gas_pos_in_d[:,0]
+				y = gas_pos_in_d[:,1]
+				z = gas_pos_in_d[:,2]
+				vx = gas_vel_in_d[:,0]
+				vy = gas_vel_in_d[:,1]
+				vz = gas_vel_in_d[:,2]
+
+				rho = np.sqrt(x**2 + y**2)
+				phi = np.arctan(x/y)
+
+				vrho = (x*vx + y*vy)*(np.cos(phi) + np.sin(phi))/rho
+				vphi = (x*vy - y*vx)*(np.cos(phi) - np.sin(phi))/rho
+
+				vbar_rho = np.mean(vrho)
+				vbar_phi = np.mean(vphi)
+				vbar_z = np.mean(vz)
+
+				sigma_rho_cold   = np.sqrt(1./(Ncold-1.) * np.sum((vrho - vbar_rho)**2.))
+				sigma_phi_cold = np.sqrt(1./(Ncold-1.) * np.sum((vphi - vbar_phi)**2.))
+				sigma_z_cold   = np.sqrt(1./(Ncold-1.) * np.sum((vz - vbar_z)**2.))
+
+
+			#---add-data-to-array------------------------------------------
+			if i == 0:
+				sigma_gas = np.array([sigma_rho,sigma_phi,sigma_z])
+				sigma_coldgas = np.array([sigma_rho_cold,sigma_phi_cold,sigma_z_cold])
+			else:
+				sigma_gas = np.vstack((sigma_gas,np.array([sigma_rho,sigma_phi,sigma_z])))
+				sigma_coldgas = np.vstack((sigma_coldgas,np.array([sigma_rho_cold,sigma_phi_cold,sigma_z_cold])))
+
+		#---------------------------------------------------------------
+		#---------------------------------------------------------------
+		sigmafile.create_dataset('sigma_star_'+str(n).zfill(3),data=sigma_star)
+		sigmafile.create_dataset('sigma_gas_'+str(n).zfill(3),data=sigma_gas)
+		sigmafile.create_dataset('sigma_coldgas_'+str(n).zfill(3),data=sigma_coldgas)
+	
+	print('\nwriting file: '+d.datdir+'sigma_v_annuli'+sim+'.hdf5')
+	sigmafile.close()
+
+	print('---------------------------------------------------------')
+
+def calculate_timefile():
+	
+	timefile = h5py.File(d.datdir+'timefile.hdf5','w')
+
+	for sim in models:
+		all_time = np.array([])
+		print(sim+'\n')
+
+		for n in np.arange(1,201):
+			printthing = 'calculating snapshot '+str(n).zfill(3)+'/200'
+			sys.stdout.write(printthing)
+			sys.stdout.flush()
+			sys.stdout.write("\b" * (len(printthing)))
+
+			fname = d.smuggledir + sim + '/snapshot_' + str(n).zfill(3)
+			header = snapHDF5.snapshot_header(fname)
+			all_time = np.append(all_time, header.time)
+
+		print('\n-----------------------------------------\n')
+		timefile.create_dataset('alltime_'+sim,data=all_time)
+
+	timefile.close()
+		 
+def calculate_sigma_profile(sim,snapnum=400):
+	# snapdir = '/mainvol/ejahn/smuggle/output/live_halo/'
+
+	if not(sim in models):
+		raise ValueError('please choose a sim in models')
+
+	j = np.where(models==sim)[0][0]
+
+	h=0.7
+	all_time = np.array([])
+	# drange = np.logspace(-1,2,100)
+	print('analyzing simulation: '+sim)
+
+	sigmaname = d.datdir+'sigma_profile_'+savenames[j]+'.hdf5'
+	sigmafile = h5py.File(sigmaname,'w')
+
+	#----------------------------------------------------------------------------------------------
+	#---read-simulation-data-----------------------------------------------------------------------
+	#----------------------------------------------------------------------------------------------
+	snapfile = d.smuggledir+sim+'/snapshot_'+str(snapnum).zfill(3)
+	darkmass = snapHDF5.read_block(snapfile, 'MASS', parttype=1)*(1.e10)/h
+	dark_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=1)/h
+	dark_vel = snapHDF5.read_block(snapfile, 'VEL ', parttype=1)
+
+	starmass = snapHDF5.read_block(snapfile, 'MASS', parttype=4)*(1.e10)/h
+	star_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=4)/h
+	star_vel = snapHDF5.read_block(snapfile, 'VEL ', parttype=4)
+
+	gasmass = snapHDF5.read_block(snapfile, 'MASS', parttype=0)*(1.e10)/h
+	gas_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=0)/h
+	gas_vel = snapHDF5.read_block(snapfile, 'VEL ', parttype=0)
+
+	rho = snapHDF5.read_block(snapfile,"RHO ",parttype=0)
+	rho *= m.Xh/m.PROTONMASS*m.UnitDensity_in_cgs  #now in cm^{-3} h^3 
+	U = snapHDF5.read_block(snapfile,"U   ",parttype=0)
+	Nelec = snapHDF5.read_block(snapfile,"NE  ",parttype=0)
+	MeanWeight= 4.0/(3*m.Xh+1+4*m.Xh*Nelec) * m.PROTONMASS
+	temp = MeanWeight/m.BOLTZMANN * (m.gamma-1) * U * m.UnitEnergy_in_cgs/ m.UnitMass_in_g
+
+	#----------------------------------------------------------------------------------------------
+	#---center-coordinates-on-CoM------------------------------------------------------------------
+	#----------------------------------------------------------------------------------------------
+	x_cm = np.sum(dark_pos[:,0] * darkmass) / np.sum(darkmass)
+	y_cm = np.sum(dark_pos[:,1] * darkmass) / np.sum(darkmass)
+	z_cm = np.sum(dark_pos[:,2] * darkmass) / np.sum(darkmass)
+	dark_cm = np.array([x_cm,y_cm,z_cm]).T
+
+	vx_cm = np.sum(dark_vel[:,0] * darkmass) / np.sum(darkmass)
+	vy_cm = np.sum(dark_vel[:,1] * darkmass) / np.sum(darkmass)
+	vz_cm = np.sum(dark_vel[:,2] * darkmass) / np.sum(darkmass)
+	dark_v_cm = np.array([vx_cm,vy_cm,vz_cm]).T
+
+	d_star = np.linalg.norm(star_pos-dark_cm, axis=1)
+	d_gas  = np.linalg.norm(gas_pos-dark_cm, axis=1)
+
+	star_pos = star_pos-dark_cm
+	gas_pos = gas_pos-dark_cm
+	star_vel = star_vel-dark_v_cm
+	gas_vel = gas_vel-dark_v_cm
+
+	r_star = np.sqrt(star_pos[:,0]**2 + star_pos[:,1]**2)
+	r_gas = np.sqrt(gas_pos[:,0]**2 + gas_pos[:,1]**2)
+
+	#----------------------------------------------------------------------------------------------
+	#---loop-through-distances-and-calculate-sigma-------------------------------------------------
+	#----------------------------------------------------------------------------------------------
+	distances = np.append(0.,np.logspace(-1,0.7,30))
+
+	for i in np.arange(len(distances)-1):
+		#---calculate-sigma-for-stars--------------------------------------------------------------
+		sel_stars_in_d = (r_star > distances[i]) & (r_star < distances[i+1])
+		Nstar = np.count_nonzero(sel_stars_in_d)
+		if Nstar < 2:
+			sigma_rho = 0
+			sigma_phi = 0
+			sigma_z   = 0
+		else:
+			star_vel_in_d = star_vel[sel_stars_in_d]
+			star_pos_in_d = star_pos[sel_stars_in_d]
+			
+			x = star_pos_in_d[:,0]
+			y = star_pos_in_d[:,1]
+			z = star_pos_in_d[:,2]
+			vx = star_vel_in_d[:,0]
+			vy = star_vel_in_d[:,1]
+			vz = star_vel_in_d[:,2]
+
+			rho = np.sqrt(x**2 + y**2)
+			phi = np.arctan(x/y)
+
+			vrho = (x*vx + y*vy)*(np.cos(phi) + np.sin(phi))/rho
+			vphi = (x*vy - y*vx)*(np.cos(phi) - np.sin(phi))/rho
+
+			vbar_rho = np.mean(vrho)
+			vbar_phi = np.mean(vphi)
+			vbar_z = np.mean(vz)
+
+			sigma_rho   = np.sqrt(1./(Nstar-1.) * np.sum((vrho - vbar_rho)**2.))
+			sigma_phi = np.sqrt(1./(Nstar-1.) * np.sum((vphi - vbar_phi)**2.))
+			sigma_z   = np.sqrt(1./(Nstar-1.) * np.sum((vz - vbar_z)**2.))
+
+		if i == 0:
+			sigma_star = np.array([sigma_rho,sigma_phi,sigma_z])
+		else:
+			sigma_star = np.vstack((sigma_star,np.array([sigma_rho,sigma_phi,sigma_z])))
+
+		#---calculate-sigma-for-gas----------------------------------------------------------------
+		sel_gas_in_d = (r_gas > distances[i]) & (r_gas < distances[i+1])
+		Ngas = np.count_nonzero(sel_gas_in_d)
+
+		sel_cold = (r_gas > distances[i]) & (r_gas < distances[i+1]) & (temp < 2e3)
+		Ncold = np.count_nonzero(sel_cold)
+		
+		#---calculate-sigma-for-all-gas----------------------------
+		if Ngas < 2:
+			sigma_rho = 0
+			sigma_phi = 0
+			sigma_z   = 0
+		else:
+			gas_vel_in_d = gas_vel[sel_gas_in_d]
+			gas_pos_in_d = gas_pos[sel_gas_in_d]
+			x = gas_pos_in_d[:,0]
+			y = gas_pos_in_d[:,1]
+			z = gas_pos_in_d[:,2]
+			vx = gas_vel_in_d[:,0]
+			vy = gas_vel_in_d[:,1]
+			vz = gas_vel_in_d[:,2]
+
+			rho = np.sqrt(x**2 + y**2)
+			phi = np.arctan(x/y)
+
+			vrho = (x*vx + y*vy)*(np.cos(phi) + np.sin(phi))/rho
+			vphi = (x*vy - y*vx)*(np.cos(phi) - np.sin(phi))/rho
+
+			vbar_rho = np.mean(vrho)
+			vbar_phi = np.mean(vphi)
+			vbar_z = np.mean(vz)
+
+			sigma_rho   = np.sqrt(1./(Ngas-1.) * np.sum((vrho - vbar_rho)**2.))
+			sigma_phi = np.sqrt(1./(Ngas-1.) * np.sum((vphi - vbar_phi)**2.))
+			sigma_z   = np.sqrt(1./(Ngas-1.) * np.sum((vz - vbar_z)**2.))
+
+		#---calculate-sigma-for-cold-gas---------------------------
+		if Ncold < 2:
+			sigma_rho_cold = 0
+			sigma_phi_cold = 0
+			sigma_z_cold   = 0
+		else:
+			gas_vel_in_d = gas_vel[sel_cold]
+			gas_pos_in_d = gas_pos[sel_cold]
+			x = gas_pos_in_d[:,0]
+			y = gas_pos_in_d[:,1]
+			z = gas_pos_in_d[:,2]
+			vx = gas_vel_in_d[:,0]
+			vy = gas_vel_in_d[:,1]
+			vz = gas_vel_in_d[:,2]
+
+			rho = np.sqrt(x**2 + y**2)
+			phi = np.arctan(x/y)
+
+			vrho = (x*vx + y*vy)*(np.cos(phi) + np.sin(phi))/rho
+			vphi = (x*vy - y*vx)*(np.cos(phi) - np.sin(phi))/rho
+
+			vbar_rho = np.mean(vrho)
+			vbar_phi = np.mean(vphi)
+			vbar_z = np.mean(vz)
+
+			sigma_rho_cold   = np.sqrt(1./(Ncold-1.) * np.sum((vrho - vbar_rho)**2.))
+			sigma_phi_cold = np.sqrt(1./(Ncold-1.) * np.sum((vphi - vbar_phi)**2.))
+			sigma_z_cold   = np.sqrt(1./(Ncold-1.) * np.sum((vz - vbar_z)**2.))
+
+
+		#---add-data-to-array------------------------------------------
+		if i == 0:
+			sigma_gas = np.array([sigma_rho,sigma_phi,sigma_z])
+			sigma_coldgas = np.array([sigma_rho_cold,sigma_phi_cold,sigma_z_cold])
+		else:
+			sigma_gas = np.vstack((sigma_gas,np.array([sigma_rho,sigma_phi,sigma_z])))
+			sigma_coldgas = np.vstack((sigma_coldgas,np.array([sigma_rho_cold,sigma_phi_cold,sigma_z_cold])))
+	
+	#---write-calculated-sigmas-to-file------------------------------------------------------------
+	sigmafile.create_dataset('sigma_star',data=sigma_star)
+	sigmafile.create_dataset('sigma_gas',data=sigma_gas)
+	sigmafile.create_dataset('sigma_coldgas',data=sigma_coldgas)
+	
+	print('\nwriting file: '+sigmaname)
+	sigmafile.close()
+
+	print('------------------------------------------------')
+
+def calculate_gas_density(sim):
+	
+	snapdir = '/mainvol/ejahn/smuggle/output/live_halo/'
+	h=0.7
+	all_time = np.array([])
+	# drange = np.logspace(-1,2,100)
+	print('analyzing simulation: '+sim)
+
+	fname = d.datdir+'rhogas_'+sim+'.hdf5'
+	gasfile = h5py.File(fname,'w')
+
+	distances = np.array([0.1,0.2,0.5,1,2,5])
+	
+	all_time = np.array([])
+	
+	for snapnum in range(1,201):
+
+		printthing = 'calculating snapshot '+str(snapnum).zfill(3)+'/200'
+		sys.stdout.write(printthing)
+		sys.stdout.flush()
+		sys.stdout.write("\b" * (len(printthing)))
+
+		#----------------------------------------------------------------------------------------------
+		#---read-simulation-data-----------------------------------------------------------------------
+		#----------------------------------------------------------------------------------------------
+		snapfile = snapdir+sim+'/snapshot_'+str(snapnum).zfill(3)
+		darkmass = snapHDF5.read_block(snapfile, 'MASS', parttype=1)*(1.e10)/h
+		dark_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=1)/h
+		dark_vel = snapHDF5.read_block(snapfile, 'VEL ', parttype=1)
+
+		starmass = snapHDF5.read_block(snapfile, 'MASS', parttype=4)*(1.e10)/h
+		star_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=4)/h
+		star_vel = snapHDF5.read_block(snapfile, 'VEL ', parttype=4)
+
+		gasmass = snapHDF5.read_block(snapfile, 'MASS', parttype=0)*(1.e10)/h
+		gas_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=0)/h
+		gas_vel = snapHDF5.read_block(snapfile, 'VEL ', parttype=0)
+
+		header = snapHDF5.snapshot_header(snapfile)
+		all_time = np.append(all_time, header.time)
+
+		rho = snapHDF5.read_block(snapfile,"RHO ",parttype=0)
+		rho *= m.Xh/m.PROTONMASS*m.UnitDensity_in_cgs  #now in cm^{-3} h^3 
+		U = snapHDF5.read_block(snapfile,"U   ",parttype=0)
+		Nelec = snapHDF5.read_block(snapfile,"NE  ",parttype=0)
+		MeanWeight= 4.0/(3*m.Xh+1+4*m.Xh*Nelec) * m.PROTONMASS
+		temp = MeanWeight/m.BOLTZMANN * (m.gamma-1) * U * m.UnitEnergy_in_cgs/ m.UnitMass_in_g
+
+		#----------------------------------------------------------------------------------------------
+		#---center-coordinates-on-CoM------------------------------------------------------------------
+		#----------------------------------------------------------------------------------------------
+		x_cm = np.sum(dark_pos[:,0] * darkmass) / np.sum(darkmass)
+		y_cm = np.sum(dark_pos[:,1] * darkmass) / np.sum(darkmass)
+		z_cm = np.sum(dark_pos[:,2] * darkmass) / np.sum(darkmass)
+		dark_cm = np.array([x_cm,y_cm,z_cm]).T
+
+		d_gas  = np.linalg.norm(gas_pos-dark_cm, axis=1)
+
+		gas_pos = gas_pos-dark_cm
+		# r_gas = np.sqrt(gas_pos[:,0]**2 + gas_pos[:,1]**2)
+
+		rhogas = np.array([])
+		rhogas_cold = np.array([])
+
+		for dist in distances:
+			gasmass_in_d = np.sum(gasmass[(d_gas < dist)])
+			vol = (4./3.)*np.pi*(dist**3.)
+			rhogas_in_d = gasmass_in_d/vol
+			rhogas = np.append(rhogas,rhogas_in_d)
+
+			gasmass_in_d_cold = np.sum(gasmass[(d_gas < dist) & (temp < 2.e3)])
+			rhogas_in_d_cold = gasmass_in_d_cold/vol
+			rhogas_cold = np.append(rhogas_cold,rhogas_in_d_cold)
+
+		gasfile.create_dataset('snap_'+str(snapnum).zfill(3),data=rhogas)
+		gasfile.create_dataset('cold_snap_'+str(snapnum).zfill(3),data=rhogas_cold)
+
+	gasfile.create_dataset('all_time',data=all_time)
+	gasfile.close()
+	print('writing file: '+fname)
+	print('------------------------------------------------')
+
+def calculate_gas_density_from_snap(sim):
+	# snapdir = '/mainvol/ejahn/smuggle/output/live_halo/'
+	h=0.7
+	all_time = np.array([])
+	# drange = np.logspace(-1,2,100)
+	print('analyzing simulation: '+sim)
+
+	if not(sim in models):
+		raise ValueError('please choose an available sim')
+
+	i = np.where(models==sim)[0][0]
+
+	fname = d.datdir+'rhogas_fromsnap_'+savenames[i]+'.hdf5'
+	gasfile = h5py.File(fname,'w')
+
+	distances = np.array([0.1,0.2,0.5,1,2,5])
+	
+	all_time = np.array([])
+	
+	for snapnum in range(1,401):
+
+		printthing = 'calculating snapshot '+str(snapnum).zfill(3)+'/400'
+		sys.stdout.write(printthing)
+		sys.stdout.flush()
+		sys.stdout.write("\b" * (len(printthing)))
+
+		#----------------------------------------------------------------------------------------------
+		#---read-simulation-data-----------------------------------------------------------------------
+		#----------------------------------------------------------------------------------------------
+		snapfile = d.smuggledir+sim+'/snapshot_'+str(snapnum).zfill(3)
+		darkmass = snapHDF5.read_block(snapfile, 'MASS', parttype=1)*(1.e10)/h
+		dark_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=1)/h
+
+		# gasmass = snapHDF5.read_block(snapfile, 'MASS', parttype=0)*(1.e10)/h
+		gas_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=0)/h
+
+		header = snapHDF5.snapshot_header(snapfile)
+		all_time = np.append(all_time, header.time)
+
+		rho = snapHDF5.read_block(snapfile,"RHO ",parttype=0)
+		rho *= m.Xh/m.PROTONMASS*m.UnitDensity_in_cgs  #now in cm^{-3} h^3 
+		U = snapHDF5.read_block(snapfile,"U   ",parttype=0)
+		Nelec = snapHDF5.read_block(snapfile,"NE  ",parttype=0)
+		MeanWeight= 4.0/(3*m.Xh+1+4*m.Xh*Nelec) * m.PROTONMASS
+		temp = MeanWeight/m.BOLTZMANN * (m.gamma-1) * U * m.UnitEnergy_in_cgs/ m.UnitMass_in_g
+
+		#----------------------------------------------------------------------------------------------
+		#---center-coordinates-on-CoM------------------------------------------------------------------
+		#----------------------------------------------------------------------------------------------
+		x_cm = np.sum(dark_pos[:,0] * darkmass) / np.sum(darkmass)
+		y_cm = np.sum(dark_pos[:,1] * darkmass) / np.sum(darkmass)
+		z_cm = np.sum(dark_pos[:,2] * darkmass) / np.sum(darkmass)
+		dark_cm = np.array([x_cm,y_cm,z_cm]).T
+
+		d_gas  = np.linalg.norm(gas_pos-dark_cm, axis=1)
+
+		gas_pos = gas_pos-dark_cm
+		# r_gas = np.sqrt(gas_pos[:,0]**2 + gas_pos[:,1]**2)
+
+		rhogas = np.array([])
+		rhogas_cold = np.array([])
+
+		for dist in distances:
+			sel = (d_gas < dist)
+			rhogas_in_d = np.mean(rho[sel])
+			rhogas = np.append(rhogas,rhogas_in_d)
+
+			sel_cold = (d_gas < dist) & (temp < 2.e3)
+			rhogas_in_d_cold = np.mean(rho[sel_cold])
+			rhogas_cold = np.append(rhogas_cold,rhogas_in_d_cold)
+
+		gasfile.create_dataset('snap_'+str(snapnum).zfill(3),data=rhogas)
+		gasfile.create_dataset('cold_snap_'+str(snapnum).zfill(3),data=rhogas_cold)
+
+	gasfile.create_dataset('all_time',data=all_time)
+	gasfile.close()
+	print('writing file: '+fname)
+	print('------------------------------------------------')
+
+def print_total_mass(snapnum=200):
+	snapdir = '/mainvol/ejahn/smuggle/output/live_halo_02.2020/fiducial_1e5/'
+	snapfile = snapdir+'/snapshot_'+str(snapnum).zfill(3)
+	
+	darkmass = snapHDF5.read_block(snapfile, 'MASS', parttype=1)*(1.e10)/h
+	# dark_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=1)/h
+
+	print(m.scinote(np.sum(darkmass)))
+
+def calculate_mass_profiles(sim):
+	if not(sim in models):
+		raise ValueError('please choose a sim in models')
+
+	i = np.where(models==sim)[0][0]
+
+	newfilename = d.datdir+'massprofiles_'+savenames[i]+'.hdf5'
+	
+	print('---------------------------------------------------------------')
+	print('analyzing: '+sim)
+	print('writing to: ',newfilename)
+	drange = np.logspace(-1,np.log10(250),100)
+
+	#---open-file-and-figure-out-starting-place----------------------------------------------------
+	try:
+		newfile = h5py.File(newfilename,'r+')
+
+		try:
+			gas_profile_all   = np.array(newfile['gas'])
+			dark_profile_all  = np.array(newfile['dark'])
+			type2_profile_all = np.array(newfile['type2'])
+			type3_profile_all = np.array(newfile['type3'])
+			type4_profile_all = np.array(newfile['type4'])
+			min_snap = gas_profile_all.shape[0]
+			print('file exists: opening')
+			preexist = True
+
+		except:
+			min_snap = 0
+			preexist = False
+			print('file exists, but is empty. starting from scratch.')
+
+	except:
+		newfile = h5py.File(newfilename,'x')
+		print('file does not exist: creating')
+		min_snap = 0
+		preexist = False
+		
+	#---read-snapshot-directory-and-figure-out-ending-place----------------------------------------
+	from os import listdir
+	from os.path import isfile, join
+
+	mypath = d.smuggledir+sim
+
+	onlyfiles = np.array([f for f in listdir(mypath) if isfile(join(mypath, f))])
+	a = onlyfiles[np.flatnonzero(np.core.defchararray.find(onlyfiles,'snapshot')!=-1)]
+	a = np.sort(a)
+	max_snap = int(a[-1].split('.')[0][-3:])
+
+	#---calculate-within-determined-range-of-snapshots-------------------------------------------
+	if min_snap>=max_snap:
+		print('read all available data. exiting.')
+
+	else:
+		print('previously read up to:',min_snap,'\nnow reading up to:',max_snap)
+
+		for snapnum in range(min_snap,max_snap+1):
+			snapfile = d.smuggledir+sim+'/snapshot_'+str(snapnum).zfill(3)
+
+			# print(snapfile)
+			printthing = 'calculating snapshot '+str(snapnum).zfill(3)+'/'+str(max_snap).zfill(3)
+			sys.stdout.write(printthing)
+			sys.stdout.flush()
+			if not(snapnum==max_snap):
+				sys.stdout.write("\b" * (len(printthing)))
+
+			darkmass = snapHDF5.read_block(snapfile, 'MASS', parttype=1)*(1.e10)/h
+			dark_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=1)/h
+
+			x_cm = np.sum(dark_pos[:,0] * darkmass) / np.sum(darkmass)
+			y_cm = np.sum(dark_pos[:,1] * darkmass) / np.sum(darkmass)
+			z_cm = np.sum(dark_pos[:,2] * darkmass) / np.sum(darkmass)
+			dark_cm = np.array([x_cm,y_cm,z_cm]).T
+			d_dark = np.linalg.norm(dark_pos-dark_cm, axis=1)
+
+			gasmass = snapHDF5.read_block(snapfile, 'MASS', parttype=0)*(1.e10)/h
+			gas_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=0)/h
+			d_gas = np.linalg.norm(gas_pos-dark_cm, axis=1)
+
+			type2mass = snapHDF5.read_block(snapfile, 'MASS', parttype=2)*(1.e10)/h
+			type2_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=2)/h
+			d_type2 = np.linalg.norm(type2_pos-dark_cm, axis=1)
+
+			type3mass = snapHDF5.read_block(snapfile, 'MASS', parttype=3)*(1.e10)/h
+			type3_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=3)/h
+			d_type3 = np.linalg.norm(type3_pos-dark_cm, axis=1)
+
+			type4mass = snapHDF5.read_block(snapfile, 'MASS', parttype=4)*(1.e10)/h
+			type4_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=4)/h
+
+			try:
+				d_type4 = np.linalg.norm(type4_pos-dark_cm, axis=1)
+				hastype4 = True
+			except:
+				hastype4 = False
+
+			dark_profile,gas_profile,type2_profile,type3_profile,type4_profile = (np.array([]),)*5
+
+			for dist in drange:
+				dark_profile  = np.append(dark_profile, np.sum(darkmass[(d_dark < dist)]))
+				gas_profile   = np.append(gas_profile,  np.sum(gasmass[(d_gas < dist)]))
+				type2_profile = np.append(type2_profile,np.sum(type2mass[(d_type2 < dist)]))
+				type3_profile = np.append(type3_profile,np.sum(type3mass[(d_type3 < dist)]))
+
+				if hastype4: 
+					type4_profile = np.append(type4_profile,np.sum(type4mass[(d_type4 < dist)]))
+				else: 		
+					type4_profile = np.append(type4_profile,0.)
+
+			try:
+				gas_profile_all   = np.vstack((gas_profile_all,gas_profile))
+				dark_profile_all  = np.vstack((dark_profile_all,dark_profile))
+				type2_profile_all = np.vstack((type2_profile_all,type2_profile))
+				type3_profile_all = np.vstack((type3_profile_all,type3_profile))
+				type4_profile_all = np.vstack((type4_profile_all,type4_profile))
+			except:
+				gas_profile_all   = gas_profile
+				dark_profile_all  = dark_profile
+				type2_profile_all = type2_profile
+				type3_profile_all = type3_profile
+				type4_profile_all = type4_profile
+		#---write--------------------------------------------------------------------------------------
+		if preexist:
+			del newfile['gas']; del newfile['dark']; del newfile['type2']; del newfile['type3']; del newfile['type4']; del newfile['drange']
+
+		newfile.create_dataset('drange',data=drange)
+		newfile.create_dataset('gas',   data=gas_profile_all)
+		newfile.create_dataset('dark',  data=dark_profile_all)
+		newfile.create_dataset('type2', data=type2_profile_all)
+		newfile.create_dataset('type3', data=type3_profile_all)
+		newfile.create_dataset('type4', data=type4_profile_all)
+		print('\nfinished')
+
+	newfile.close()
+
+	
+	print('---------------------------------------------------------------'+'\n')
+
+def calculate_sfgas_profile(sim):
+	if not(sim in models):
+		raise ValueError('please choose a sim in models')
+
+	i = np.where(models==sim)[0][0]
+
+	newfile = h5py.File(d.datdir+'massprofiles_'+savenames[i]+'.hdf5','r+')
+	drange = np.logspace(-1,np.log10(250),100)
+
+	for snapnum in range(401):
+		snapfile = d.smuggledir+sim+'/snapshot_'+str(snapnum).zfill(3)
+
+		print(snapfile)
+		darkmass = snapHDF5.read_block(snapfile, 'MASS', parttype=1)*(1.e10)/h
+		dark_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=1)/h
+
+		x_cm = np.sum(dark_pos[:,0] * darkmass) / np.sum(darkmass)
+		y_cm = np.sum(dark_pos[:,1] * darkmass) / np.sum(darkmass)
+		z_cm = np.sum(dark_pos[:,2] * darkmass) / np.sum(darkmass)
+		dark_cm = np.array([x_cm,y_cm,z_cm]).T
+		d_dark = np.linalg.norm(dark_pos-dark_cm, axis=1)
+
+		gasmass = snapHDF5.read_block(snapfile, 'MASS', parttype=0)*(1.e10)/h
+		gas_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=0)/h
+		gas_sfr = snapHDF5.read_block(snapfile, 'SFR ', parttype=0)
+		d_gas = np.linalg.norm(gas_pos-dark_cm, axis=1)
+
+		gasmass = gasmass[(gas_sfr > 0)]
+		d_gas = d_gas[(gas_sfr > 0)]
+
+		sfgas_profile = np.array([])
+
+		for dist in drange:
+			thismass = np.sum(gasmass[d_gas < dist])
+			sfgas_profile = np.append(sfgas_profile,thismass)
+
+		if snapnum==0:
+			sfgas_profile_all = sfgas_profile
+				
+		else:
+			sfgas_profile_all   = np.vstack((sfgas_profile_all,sfgas_profile))
+		
+	newfile.create_dataset('sfgas',data=sfgas_profile_all)
+	newfile.close()
