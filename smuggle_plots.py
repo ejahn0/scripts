@@ -34,9 +34,9 @@ columns = np.int(columns)
 # whichsims = 'fixISM'
 # whichsims = 'vareff_compare'
 # whichsims = 'ff_compare'
-whichsims = '1e5'
+# whichsims = '1e5'
 # whichsims = '1e6'
-# whichsims = 'all'
+whichsims = 'all'
 
 
 models = np.array(['fiducial_1e5',					#0
@@ -688,21 +688,23 @@ def panel_projection_single(sim,snapnum,show_progress=True):
 	gas_pos = gas_pos - cm
 
 	#---------------------------------------------
-	gas_ap = 0.3
+	gas_ap = 0.1
 	star_ap = 1
 
+	#---plot-face-on---
 	sel_gas_front = (gas_pos[:,2] > 0)
 	sel_gas_back = (gas_pos[:,2] <= 0)
-
+	
 	axarr[0].plot(gas_pos[:,0][sel_gas_front],gas_pos[:,1][sel_gas_front],',',c='blue',alpha=gas_ap,zorder=100)
 	if np.sum(strmass) > 0:
 		axarr[0].plot(str_pos[:,0],str_pos[:,1],',',c='orange',alpha=star_ap,zorder=10)
 	axarr[0].plot(gas_pos[:,0][sel_gas_back],gas_pos[:,1][sel_gas_back],',',c='blue',alpha=gas_ap,zorder=1)	
 	
+	#---plot-edge-on---
 	sel_gas_front = (gas_pos[:,1] > 0)
 	sel_gas_back = (gas_pos[:,1] <= 0)	
-																	
-	axarr[1].plot(gas_pos[:,0][sel_gas_front],gas_pos[:,2][sel_gas_front],',',c='blue',alpha=0.2,zorder=100)	
+
+	axarr[1].plot(gas_pos[:,0][sel_gas_front],gas_pos[:,2][sel_gas_front],',',c='blue',alpha=0.05,zorder=100)	
 	if np.sum(strmass) > 0:
 		axarr[1].plot(str_pos[:,0],str_pos[:,2],',',c='orange',alpha=star_ap,zorder=10)
 	axarr[1].plot(gas_pos[:,0][sel_gas_back],gas_pos[:,2][sel_gas_back],',',c='blue',alpha=gas_ap,zorder=1)
@@ -2334,15 +2336,16 @@ def SFH():
 	ax.set_ylabel('frequency')
 	p.finalize(fig,'SFH_'+whichsims,save=1)
 
-def outflow_velocity(sim,snapnum,dist,width,save):
+def outflow_velocity(sim,snapnum,vtype,dist,width,save=True,exclude=False):
 	if not(sim in models):
 		raise ValueError('please choose a sim from models')
+	i = np.where(models==sim)[0][0]
 
 	fig,ax = p.makefig(1)
 	plt.rcParams.update({'savefig.bbox': 'tight', 'savefig.pad_inches':'0.05'})
-	i = np.where(models==sim)[0][0]
 
 	snapfile = d.smuggledir+sim+'/snapshot_'+str(snapnum).zfill(3)
+	thisname = 'outflow_movie_'+savenames[i]+'_'+vtype
 
 	inner = dist - width/2
 	outer = dist + width/2
@@ -2357,21 +2360,50 @@ def outflow_velocity(sim,snapnum,dist,width,save):
 	gasmass = snapHDF5.read_block(snapfile, 'MASS', parttype=0)*(1.e10)/h
 	gas_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=0)/h
 	gas_vel = snapHDF5.read_block(snapfile, 'VEL ', parttype=0)
+	
+	if exclude:
+		sel_exc = (np.abs(gas_pos[:,0]) > 5) & (np.abs(gas_pos[:,1]) > 5) & (np.abs(gas_pos[:,2]) > 1) 
+		gas_pos = gas_pos[sel_exc]
+		gas_vel = gas_vel[sel_exc]
+
+		text = ax.annotate(r'excluded [5,5,1]',xy=(0.65,0.8),xycoords='axes fraction',fontsize=11,color='k')
+		text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor='black', 
+			edgecolor='white'), path_effects.Normal()])
+
+		thisname += '_excludebox'
+
 	d_gas  = np.linalg.norm(gas_pos-dark_cm, axis=1)
-	gas_rhat = ((gas_pos - dark_cm).T / d_gas).T
-
 	gas_vel = gas_vel[(d_gas > inner) & (d_gas < outer)]
-	gas_rhat = gas_rhat[(d_gas > inner) & (d_gas < outer)]
+	
+	if vtype=='vr':
+		gas_rhat = ((gas_pos - dark_cm).T / d_gas).T
+		gas_rhat = gas_rhat[(d_gas > inner) & (d_gas < outer)]
 
-	# print(gas_vel.shape,gas_rhat.shape)
+		gas_vr = np.array([])
+		for j in range(len(gas_vel)):
+			gas_vr = np.append(gas_vr,np.dot(gas_vel[j],gas_rhat[j]))
 
-	# gas_vr = np.dot(gas_vel,gas_rhat.T)
-	gas_vr = np.array([])
-	for j in range(len(gas_vel)):
-		gas_vr = np.append(gas_vr,np.dot(gas_vel[j],gas_rhat[j]))
+		ax.hist(gas_vr,bins=20,color=colors_list[i],histtype='step',normed=True)
+		ax.hist(gas_vr,bins=20,color=colors_list[i],histtype='stepfilled',alpha=0.4,normed=True)
+		text = ax.annotate(r'$n$ = '+str(len(gas_vr)),xy=(0.7,0.85),xycoords='axes fraction',fontsize=11,color='k')
 
-	ax.hist(gas_vr,bins=20,color=colors_list[i],histtype='step',normed=True)
-	ax.hist(gas_vr,bins=20,color=colors_list[i],histtype='stepfilled',alpha=0.4,normed=True)
+		text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor='black', 
+			edgecolor='white'), path_effects.Normal()])
+
+		ax.set_xlabel(r'gas radial velocity $v_r$ [km/s]')
+
+	elif vtype=='vz':
+		gas_vz = gas_vel[:,2]
+
+		ax.hist(gas_vz,bins=20,color=colors_list[i],histtype='step',normed=True)
+		ax.hist(gas_vz,bins=20,color=colors_list[i],histtype='stepfilled',alpha=0.4,normed=True)
+		text = ax.annotate(r'$n$ = '+str(len(gas_vz)),xy=(0.7,0.85),xycoords='axes fraction',fontsize=11,color='k')
+
+		text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor='black', 
+		edgecolor='white'), path_effects.Normal()])
+
+		ax.set_xlabel(r'gas vertical velocity $v_z$ [km/s, gas]')
+
 
 	text = ax.annotate(models_label[i]+'\nsnapshot '+str(snapnum).zfill(3),
 		xy=(0.05,0.9),xycoords='axes fraction',fontsize=11,color=colors_list[i])
@@ -2379,20 +2411,33 @@ def outflow_velocity(sim,snapnum,dist,width,save):
 		edgecolor='white'), path_effects.Normal()])
 
 	text = ax.annotate(str(inner)+r' kpc < $d_\mathregular{gas}$ < '+str(outer)+' kpc',
-		xy=(0.6,0.9),xycoords='axes fraction',fontsize=11,color='k')
+		xy=(0.5,0.9),xycoords='axes fraction',fontsize=11,color='k')
 	text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor='black', 
 		edgecolor='white'), path_effects.Normal()])
 
-	text = ax.annotate(r'$n$ = '+str(len(gas_vr)),xy=(0.75,0.85),xycoords='axes fraction',fontsize=11,color='k')
 
-	ax.set_xlabel(r'$v_r$ [km/s, gas]')
-	ax.set_xlim(-125,125)
-	ax.set_xticks([-100,-50,0,50,100])
-	ax.set_xticks([-125,-75,-25,25,75,125],minor=True)
+	# ax.tick_params(axis='y', which='both', left=False, right=False, labelleft=False, labelright=False, 
+	# 	direction='in',labelsize=16,length=3)
 
-	ax.set_ylabel('frequency')
 
-	p.finalize(fig,'outflow_movie/outflow_'+savenames[i]+'_'+str(inner)+'-'+str(outer)+'_'+str(snapnum).zfill(3),save=save)
+	ax.set_ylim(0,0.04)
+	ax.set_yticks([0,0.01,0.02,0.03,0.04])
+	ax.set_yticklabels(['','','','',''])
+	ax.set_yticks([0.005,0.015,0.025,0.035],minor=True)
+
+	ax.set_xlim(-200,200)
+	ax.set_xticks([-200,-150,-100,-50,0,50,100,150,200])
+	ax.set_xticklabels(['-200','','-100','','0','','100','','200'])
+	ax.set_xticks([-175,-125,-75,-25,25,75,125,175],minor=True)
+
+	ax.set_ylabel('freq [arbitrary units]')
+
+	thisname += '/'+str(inner)+'-'+str(outer)+'_'+str(snapnum).zfill(3)+'.png'
+
+	# p.finalize(fig,thisname,save=save)
+	print('saving figure: /home/ejahn003/movie_frames/'+thisname)
+	plt.savefig('/home/ejahn003/movie_frames/'+thisname,format='png',dpi=200)
+	# plt.show()
 
 def alpha_proj(sim,snapnum,bound=10,do_epsilon=True):
 	if not(sim in models):
@@ -2663,10 +2708,23 @@ ww = 0.5
 
 # plotradius_new()
 
-timescales('vareff_1e5',200,'tdyn','distance')
-timescales('vareff_1e5',200,'tsfr','distance')
+# timescales('vareff_1e5',200,'tdyn','distance')
+# timescales('vareff_1e5',200,'tsfr','distance')
 # timescales('fiducial_1e5',400,'tdyn','density')
-timescales('vareff_1e5',200,'tsfr','density')
+# timescales('vareff_1e5',200,'tsfr','density')
+
+# outflow_velocity('vareff_1e5',211,'vr',5,0.5,save=True,exclude=True)
+
+# for n in np.arange(211,251):
+# 	outflow_velocity('vareff_1e5',n,'vr',5,0.5,save=True,exclude=False)
+# 	outflow_velocity('vareff_1e5',n,'vr',5,0.5,save=True,exclude=True)
+# 	outflow_velocity('vareff_1e5',n,'vz',5,0.5,save=True,exclude=False)
+# 	outflow_velocity('vareff_1e5',n,'vz',5,0.5,save=True,exclude=True)
+
+panel_projection_single('fiducial_1e6',200,show_progress=False)
+
+
+
 
 
 

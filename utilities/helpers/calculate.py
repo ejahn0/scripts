@@ -1,7 +1,9 @@
 import numpy as np
 import catalogHDF5 as cat
 import snapHDF5
+import smuggle_plots as s
 
+models = s.models
 
 def calculate_massdist(simname,num='600'):
 	
