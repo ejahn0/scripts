@@ -1,10 +1,10 @@
 import numpy as np
 import catalogHDF5 as cat
-import snapHDF5
-import smuggle_plots as s
+import directories as d 
+import snapHDF5, h5py, sys
+h = 0.7
 
-models = s.models
-
+#---Fire----------------------------------------------------------------------------
 def calculate_massdist(simname,num='600'):
 	
 	print('calculating ' + simname)
@@ -287,7 +287,7 @@ def density_v_time():
 		header = snapHDF5.snapshot_header(snapfile)
 	
 
-
+#---smuggle-------------------------------------------------------------------------
 def calculate_mass_in_r(sim):
 	snapdir = '/mainvol/ejahn/smuggle/output/live_halo/'
 	h=0.7
@@ -936,17 +936,17 @@ def print_total_mass(snapnum=200):
 
 	print(m.scinote(np.sum(darkmass)))
 
-def calculate_mass_profiles(sim):
-	if not(sim in models):
-		raise ValueError('please choose a sim in models')
+def calculate_mass_profiles(sim,savename):
+	# if not(sim in models):
+	# 	raise ValueError('please choose a sim in models')
 
-	i = np.where(models==sim)[0][0]
+	# i = np.where(models==sim)[0][0]
 
-	newfilename = d.datdir+'massprofiles_'+savenames[i]+'.hdf5'
+	newfilename = d.datdir+'massprofiles_'+savename+'.hdf5'
 	
 	print('---------------------------------------------------------------')
 	print('analyzing: '+sim)
-	print('writing to: ',newfilename)
+	print('writing to: '+str(newfilename))
 	drange = np.logspace(-1,np.log10(250),100)
 
 	#---open-file-and-figure-out-starting-place----------------------------------------------------
@@ -990,7 +990,7 @@ def calculate_mass_profiles(sim):
 		print('read all available data. exiting.')
 
 	else:
-		print('previously read up to:',min_snap,'\nnow reading up to:',max_snap)
+		print('previously read up to: '+str(min_snap)+'\nnow reading up to: '+str(max_snap))
 
 		for snapnum in range(min_snap,max_snap+1):
 			snapfile = d.smuggledir+sim+'/snapshot_'+str(snapnum).zfill(3)
@@ -1118,3 +1118,5 @@ def calculate_sfgas_profile(sim):
 		
 	newfile.create_dataset('sfgas',data=sfgas_profile_all)
 	newfile.close()
+
+#-----------------------------------------------------------------------------------

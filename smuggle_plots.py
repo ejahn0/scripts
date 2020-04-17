@@ -7,6 +7,7 @@ from pylab import *
 import plot_helper as p
 import math_helper as m
 import directories as d
+import calculate as calc
 import mycolors as c
 import matplotlib.colors as mplcolors
 import matplotlib.cm as cm
@@ -30,13 +31,15 @@ columns = np.int(columns)
 # 	'#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe', '#008080', '#e6beff', 
 # 	'#9a6324', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080', '#000000'])
 
-# whichsims = 'fixMorph'
-# whichsims = 'fixISM'
+# whichsims = 'fixMorph_1e5'
+# whichsims = 'fixISM_1e5'
+whichsims = 'fixMorph_1e6'
+# whichsims = 'fixISM_1e6'
 # whichsims = 'vareff_compare'
 # whichsims = 'ff_compare'
 # whichsims = '1e5'
 # whichsims = '1e6'
-whichsims = 'all'
+# whichsims = 'all'
 
 
 models = np.array(['fiducial_1e5',					#0
@@ -49,7 +52,8 @@ models = np.array(['fiducial_1e5',					#0
 				   'fiducial_1e6',					#7
 				   'eSF100_1e6',					#8
 				   'rho0.1_1e6',					#9
-				   'vareff_1e6'						#10
+				   'vareff_1e6',					#10
+				   'tiny_1e6'						#11
 				   ])
 
 models_label = np.array(['fiducial 1e5',							#0
@@ -57,12 +61,13 @@ models_label = np.array(['fiducial 1e5',							#0
 						 'tiny dwarf 1e5',							#2
 						 'var. eff. 1e5',							#3
 						 'var. eff. v2 1e5',						#4
-						 r'$\epsilon_\mathregular{SF}$=1 1e5',		#5
+						 r'$\varepsilon_\mathregular{SF}$=1 1e5',	#5
 						 r'$n_\mathregular{th}$=0.1cm$^{-3}$ 1e5',	#6
 						 'fiducial 1e6',							#7
 						 r'$\epsilon_\mathregular{SF}$=1 1e6',		#8
 						 r'$n_\mathregular{th}$=0.1cm$^{-3}$ 1e6',	#9
-						 'var. eff. 1e6'							#10
+						 'var. eff. 1e6',							#10
+						 'tiny dwarf 1e6'							#11
 						 ])
 
 colors_list = np.array(['black',			#0	
@@ -70,13 +75,13 @@ colors_list = np.array(['black',			#0
 				   		'orange',			#2	
 				   		'darkturquoise',	#3
 				   		'blue',				#4
-				   		'red',				#5
-				   		'violet',			#6
-				   		# 'pink',				#7
-				   		'black',			#8
-				   		'red',				#9
-				   		'violet',			#10
-				   		'darkturquoise'		#11
+				   		'firebrick',		#5
+				   		'hotpink',			#6
+				   		'black',			#7
+				   		'firebrick',		#8
+				   		'violet',			#9
+				   		'darkturquoise',	#10
+				   		'orange'			#11
 				   		])
 
 ls_list = np.array(['-', #0
@@ -92,15 +97,17 @@ ls_list = np.array(['-', #0
 if whichsims in models:
 	mask = np.zeros(8).astype('bool')
 	mask[np.where(models==whichsims)[0][0]] = True
-													#0      1      2      3      4      5      6      7      8      9      10
-elif whichsims=='fixMorph':			mask = np.array([True , False, False, True , True , False, False, False, False, False, False])
-elif whichsims=='fixISM':			mask = np.array([True , True , True , False, False, False, False, False, False, False, False])
-elif whichsims=='vareff_compare': 	mask = np.array([False, False, False, True , True , False, False, False, False, False, False])
-elif whichsims=='ff_compare':		mask = np.array([True,  False, False, False, False, False, False, True , False, False, False])
-elif whichsims=='1e5':				mask = np.array([True , True , True , True , True , True , True , False, False, False, False])
-elif whichsims=='1e6': 				mask = np.array([False, False, False, False, False, False, False, True , True , True , True ])
-elif whichsims=='all':				mask = np.array([True , True , True , True , True , True , True , False, False, False, False])
-
+													#0      1      2      3      4      5      6      7      8      9      10     11
+elif whichsims=='fixMorph_1e5':		mask = np.array([True , False, False, False, True , True , True , False, False, False, False, False])
+elif whichsims=='fixISM_1e5':		mask = np.array([True , True , True , False, False, False, False, False, False, False, False, False])
+elif whichsims=='fixMorph_1e6':		mask = np.array([False, False, False, False, False, False, False, True , True , True , True , False])
+elif whichsims=='fixISM_1e6':		mask = np.array([False, False, False, False, False, False, False, True , False, False, False, True ])
+elif whichsims=='vareff_compare': 	mask = np.array([False, False, False, True , True , False, False, False, False, False, False, False])
+elif whichsims=='ff_compare':		mask = np.array([True,  False, False, False, False, False, False, True , False, False, False, False])
+elif whichsims=='1e5':				mask = np.array([True , True , True , True , True , True , True , False, False, False, False, False])
+elif whichsims=='1e6': 				mask = np.array([False, False, False, False, False, False, False, True , True , True , True , True ])
+elif whichsims=='all':				mask = np.array([True , True , True , True , True , True , True , False, False, False, False, False])
+ 
 else: raise ValueError('unknown whichsims')
 
 models = models[mask]
@@ -2068,7 +2075,7 @@ def massprofile(sim,snapnum,do_density=False,do_velocity=False,plot_initial=Fals
 	
 	p.finalize(fig,fname+str(snapnum).zfill(3),save=0)
 
-def plotradius_new(ptype='core'):
+def plotradius(ptype='core',do_bins=False):
 	fig,ax = p.makefig(1,figx=7)
 	plt.rcParams.update({'savefig.bbox': 'tight', 'savefig.pad_inches':'0.05'})
 
@@ -2155,16 +2162,33 @@ def plotradius_new(ptype='core'):
 		f.close()
 
 		if ptype=='core':
-			if '1e6' in sim:
-				lw = 1.3; ls = '--'
-			else:
-				lw = 1.6; ls = '-'
+			# if '1e6' in sim:
+			# 	lw = 1.3; ls = '--'
+			# else:
+			# 	lw = 1.6; ls = '-'
+			lw = 1.6;ls='-'
 
-			ax.plot(time,core_radius,colors_list[i],lw=lw,ls=ls,alpha=0.7)
+			if do_bins:
+				timebins = np.linspace(0, 2, 30)
+				binwidth = (timebins[1] - timebins[0])/2
+				rcore_mean = np.array([])
+
+				for j in range(len(timebins)-1):
+					leftbin = timebins[j]
+					rightbin = timebins[j+1]
+
+					sel = (time > leftbin) & (time < rightbin)
+					rcore_mean = np.append(rcore_mean, np.mean(core_radius[sel]))
+
+				ax.plot(timebins[0:-1]+binwidth,rcore_mean,color=colors_list[i],linewidth=lw,alpha=0.7,ls=ls)
+				# ax.annotate(models_label[i],xy=(0.05,1-(0.05*(i+1))),xycoords='axes fraction',fontsize=11,color=colors_list[i])
+
+			else:
+				ax.plot(time,core_radius,colors_list[i],lw=lw,ls=ls,alpha=0.7)
 			
 			ax.set_ylabel(r'$r_\mathregular{core}$ [kpc]')
 			fname = 'radius_core_'+whichsims
-			ax.annotate(models_label[i]+' '+ls,xy=(0.05,0.98-(0.04*(i+1))),xycoords='axes fraction',fontsize=11,color=colors_list[i])
+			ax.annotate(models_label[i]+' ',xy=(0.05,0.98-(0.04*(i+1))),xycoords='axes fraction',fontsize=11,color=colors_list[i])
 			
 			# ax.axvline(x=0.90)	
 			# ax.axvline(x=1.08)	
@@ -2186,6 +2210,7 @@ def plotradius_new(ptype='core'):
 			ax.annotate(models_label[i],xy=(0.05,0.98-(0.04*(i+1))),xycoords='axes fraction',fontsize=11,color=colors_list[i])
 
 	ax.set_xlabel(r'time [$h^{-1}$ Gyr]')
+	ax.set_xlim(0,2)
 	
 
 	p.finalize(fig,fname,save=1)
@@ -2721,8 +2746,17 @@ ww = 0.5
 # 	outflow_velocity('vareff_1e5',n,'vz',5,0.5,save=True,exclude=False)
 # 	outflow_velocity('vareff_1e5',n,'vz',5,0.5,save=True,exclude=True)
 
-panel_projection_single('fiducial_1e6',200,show_progress=False)
+# panel_projection_single('fiducial_1e6',200,show_progress=False)
 
+
+# plotradius()
+
+# for sim in models:
+# 	i = np.where(models==sim)[0][0]
+# 	calc.calculate_mass_profiles(sim,savenames[i])
+
+# sfr_time()
+plotradius()
 
 
 
