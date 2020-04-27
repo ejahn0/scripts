@@ -58,7 +58,7 @@ models = np.array(['fiducial_1e5',					#0
 
 models_label = np.array(['fiducial 1e5',							#0
 						 'compact dwarf, ff 1e5',					#1
-						 'tiny dwarf 1e5',							#2
+						 'tiny dwarf, ff 1e5',						#2
 						 'var. eff. 1e5',							#3
 						 'var. eff. v2 1e5',						#4
 						 r'$\varepsilon_\mathregular{SF}$=1 1e5',	#5
@@ -265,7 +265,7 @@ def kslaw():
 
 	p.finalize(fname='kslaw_allmodels',save=1)
 
-def sfr_time(do_bins=True):
+def sfr_time(do_bins=False):
 	fig,ax=p.makefig(1,figx=8,figy=6)
 	plt.rcParams.update({'savefig.bbox': 'tight', 'savefig.pad_inches':'0.05'})
 
@@ -1440,7 +1440,7 @@ def plot_sigma_annuli(sim,d_ind,smooth=False):
 	p.finalize(fig,fname='sigma/sigma_annuli_'+sim+'_'+str(d_ind),save=1)#,tight=False)
 	# plt.savefig(d.plotdir+month+'/'+'sigma_'+sim+'_dcut'+str(dcut)+'.png',dpi=200,format='png')
 
-def plot_sigma_profile(sim,snapnum=400):
+def plot_sigma_profile_all(sim,snapnum=400):
 	# fig,ax = p.makefig(1)
 	fig,axarr = p.makefig('3_horiz',figx=15,figy=5)
 	plt.rcParams.update({'savefig.bbox': 'tight', 'savefig.pad_inches':'0.05'})
@@ -1540,6 +1540,212 @@ def plot_sigma_profile(sim,snapnum=400):
 		axarr[i].set_yticks([5,15,25,35,45,55],minor=True)
 
 	p.finalize(fig,fname='sigma_profile_'+savenames[j],save=1)
+
+def plot_sigma_radial(sim,snapnum=400):
+	fig,ax = p.makefig(1,figx=8,figy=5)
+	plt.rcParams.update({'savefig.bbox': 'tight', 'savefig.pad_inches':'0.05'})
+
+	if not(sim in models):
+		raise ValueError('please choose a sim in models')
+
+	j = np.where(models==sim)[0][0]
+
+
+	#--read-sigma-for-current-model----------------------------------------------
+	sigmaname = d.datdir+'sigma_profile_'+savenames[j]+'.hdf5'
+	sigmafile = h5py.File(sigmaname,'r')
+	sigma_star = np.array(sigmafile['sigma_star'])
+	sigma_gas = np.array(sigmafile['sigma_gas'])
+	sigma_coldgas = np.array(sigmafile['sigma_coldgas'])
+	sigmafile.close()
+
+	dbins = np.append(0.,np.logspace(-1,0.7,30))
+	dplt = np.array([])
+
+	for i in np.arange(len(dbins)-1):
+		# left = dbins[i]
+		# right = dbins[i+1]
+		mean = np.mean(np.array([dbins[i],dbins[i+1]]))
+		dplt = np.append(dplt,mean)
+
+	sigma_star_rho = sigma_star[:,0]
+	sigma_gas_rho = sigma_gas[:,0]
+	sigma_coldgas_rho = sigma_coldgas[:,0]
+
+	ax.plot(dplt,sigma_star_rho,ls='-',c=c.orange,alpha=0.8,lw=2,zorder=13)
+	ax.plot(dplt,sigma_gas_rho,ls=':',c=c.blue,alpha=0.8,lw=2,zorder=20)
+	ax.plot(dplt,sigma_coldgas_rho,ls='--',c=c.green,alpha=0.8,lw=1.5,zorder=10)
+
+	#--read-sigma-for-fiducial-----------------------------------------------------
+	sigmaname = d.datdir+'sigma_profile_fiducial_1e5.hdf5'
+	sigmafile = h5py.File(sigmaname,'r')
+	sigma_star = np.array(sigmafile['sigma_star'])
+	sigma_gas = np.array(sigmafile['sigma_gas'])
+	sigma_coldgas = np.array(sigmafile['sigma_coldgas'])
+	sigmafile.close()
+
+	dbins = np.append(0.,np.logspace(-1,0.7,30))
+	dplt = np.array([])
+
+	for i in np.arange(len(dbins)-1):
+		# left = dbins[i]
+		# right = dbins[i+1]
+		mean = np.mean(np.array([dbins[i],dbins[i+1]]))
+		dplt = np.append(dplt,mean)
+
+	sigma_star_rho = sigma_star[:,0]
+	sigma_gas_rho = sigma_gas[:,0]
+	sigma_coldgas_rho = sigma_coldgas[:,0]
+
+	ax.plot(dplt,sigma_star_rho,ls='-',c='k',alpha=0.2,lw=1,zorder=1)
+	ax.plot(dplt,sigma_gas_rho,ls=':',c='k',alpha=0.2,lw=1,zorder=1)
+	ax.plot(dplt,sigma_coldgas_rho,ls='--',c='k',alpha=0.2,lw=1,zorder=1)
+
+	#--legends-and-stuff-----------------------------------------------------------
+	# text = ax.annotate(r'$\mathregular{\sigma_r}$',xy=(0.9,0.9),xycoords='axes fraction',fontsize=20,color='k')
+	# text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor='black', 
+	# 	edgecolor='white'), path_effects.Normal()])
+
+	simtext = models_label[j]+'\nsnapshot '+str(snapnum).zfill(3)
+	text = ax.annotate(simtext,xy=(0.6,0.85),xycoords='axes fraction',fontsize=12,color='black')
+	text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor='black', 
+		edgecolor='white'), path_effects.Normal()])
+
+	text = ax.annotate('stars',xy=(0.07,0.92),xycoords='axes fraction',fontsize=15,color=c.orange)
+	text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor=c.orange, 
+		edgecolor='white'), path_effects.Normal()])
+	text = ax.annotate('gas',xy=(0.07,0.87),xycoords='axes fraction',fontsize=15,color=c.blue)
+	text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor=c.blue, 
+		edgecolor='white'), path_effects.Normal()])
+	text = ax.annotate('cold gas',xy=(0.07,0.82),xycoords='axes fraction',fontsize=15,color=c.green)
+	text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor=c.green, 
+		edgecolor='white'), path_effects.Normal()])
+	text = ax.annotate('fiducial',xy=(0.07,0.77),xycoords='axes fraction',fontsize=15,color='grey')
+	text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor='grey', 
+		edgecolor='white'), path_effects.Normal()])
+	# ax.legend(loc='upper center',prop={'size':13},frameon=False)
+
+	ax.set_ylabel(r'$\mathregular{\sigma_r}$ [km s$\mathregular{^{-1}}$]')
+	ax.set_xlabel('d [kpc]')
+
+	ax.set_xscale('log')
+	p.clear_axes(ax)
+
+	ax.set_xlim(0.1,5)
+	ax.set_xticks([0.1,0.2,0.5,1.,2.])
+	ax.set_xticklabels([0.1,0.2,0.5,1.,2.])
+	# ax.set_xticks([0,1,2,3,4,5])
+	# ax.set_xticks([0.5,1.5,2.5,3.5,4.5],minor=True)
+	
+	ax.set_ylim(0,50)
+	ax.set_yticks([10,20,30,40,50])
+	ax.set_yticks([5,15,25,35,45],minor=True)
+
+	p.finalize(fig,fname='sigma_radial_profile_'+savenames[j],save=1)
+	
+def plot_sigma_disk(sim,snapnum=400):
+	fig,ax = p.makefig(1,figx=8,figy=5)
+	plt.rcParams.update({'savefig.bbox': 'tight', 'savefig.pad_inches':'0.05'})
+
+	if not(sim in models):
+		raise ValueError('please choose a sim in models')
+
+	j = np.where(models==sim)[0][0]
+
+
+	#--read-sigma-for-current-model----------------------------------------------
+	sigmaname = d.datdir+'sigma_profile_'+savenames[j]+'.hdf5'
+	sigmafile = h5py.File(sigmaname,'r')
+	sigma_star = np.array(sigmafile['sigma_star'])
+	sigma_gas = np.array(sigmafile['sigma_gas'])
+	sigma_coldgas = np.array(sigmafile['sigma_coldgas'])
+	sigmafile.close()
+
+	dbins = np.append(0.,np.logspace(-1,0.7,30))
+	dplt = np.array([])
+
+	for i in np.arange(len(dbins)-1):
+		# left = dbins[i]
+		# right = dbins[i+1]
+		mean = np.mean(np.array([dbins[i],dbins[i+1]]))
+		dplt = np.append(dplt,mean)
+
+	sigma_star_phiz = sigma_star[:,1]/sigma_star[:,2]
+	sigma_gas_phiz = sigma_gas[:,1]/sigma_gas[:,2]
+	sigma_coldgas_phiz = sigma_coldgas[:,1]/sigma_coldgas[:,2]
+
+
+	ax.plot(dplt,sigma_star_phiz,ls='-',c=c.orange,alpha=0.8,lw=2,zorder=13)
+	ax.plot(dplt,sigma_gas_phiz,ls=':',c=c.blue,alpha=0.8,lw=2,zorder=20)
+	ax.plot(dplt,sigma_coldgas_phiz,ls='--',c=c.green,alpha=0.8,lw=1.5,zorder=10)
+
+	#--read-sigma-for-fiducial-----------------------------------------------------
+	sigmaname = d.datdir+'sigma_profile_fiducial_1e5.hdf5'
+	sigmafile = h5py.File(sigmaname,'r')
+	sigma_star = np.array(sigmafile['sigma_star'])
+	sigma_gas = np.array(sigmafile['sigma_gas'])
+	sigma_coldgas = np.array(sigmafile['sigma_coldgas'])
+	sigmafile.close()
+
+	dbins = np.append(0.,np.logspace(-1,0.7,30))
+	dplt = np.array([])
+
+	for i in np.arange(len(dbins)-1):
+		# left = dbins[i]
+		# right = dbins[i+1]
+		mean = np.mean(np.array([dbins[i],dbins[i+1]]))
+		dplt = np.append(dplt,mean)
+
+	sigma_star_phiz = sigma_star[:,1]/sigma_star[:,2]
+	sigma_gas_phiz = sigma_gas[:,1]/sigma_gas[:,2]
+	sigma_coldgas_phiz = sigma_coldgas[:,1]/sigma_coldgas[:,2]
+
+	ax.plot(dplt,sigma_star_phiz,ls='-',c='k',alpha=0.2,lw=1,zorder=1)
+	ax.plot(dplt,sigma_gas_phiz,ls=':',c='k',alpha=0.2,lw=1,zorder=1)
+	ax.plot(dplt,sigma_coldgas_phiz,ls='--',c='k',alpha=0.2,lw=1,zorder=1)
+
+	#--legends-and-stuff-----------------------------------------------------------
+	# text = ax.annotate(r'$\mathregular{\sigma_r}$',xy=(0.9,0.9),xycoords='axes fraction',fontsize=20,color='k')
+	# text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor='black', 
+	# 	edgecolor='white'), path_effects.Normal()])
+
+	simtext = models_label[j]+'\nsnapshot '+str(snapnum).zfill(3)
+	text = ax.annotate(simtext,xy=(0.3,0.85),xycoords='axes fraction',fontsize=12,color='black')
+	text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor='black', 
+		edgecolor='white'), path_effects.Normal()])
+
+	text = ax.annotate('stars',xy=(0.07,0.92),xycoords='axes fraction',fontsize=15,color=c.orange)
+	text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor=c.orange, 
+		edgecolor='white'), path_effects.Normal()])
+	text = ax.annotate('gas',xy=(0.07,0.87),xycoords='axes fraction',fontsize=15,color=c.blue)
+	text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor=c.blue, 
+		edgecolor='white'), path_effects.Normal()])
+	text = ax.annotate('cold gas',xy=(0.07,0.82),xycoords='axes fraction',fontsize=15,color=c.green)
+	text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor=c.green, 
+		edgecolor='white'), path_effects.Normal()])
+	text = ax.annotate('fiducial',xy=(0.07,0.77),xycoords='axes fraction',fontsize=15,color='grey')
+	text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor='grey', 
+		edgecolor='white'), path_effects.Normal()])
+	# ax.legend(loc='upper center',prop={'size':13},frameon=False)
+
+	ax.set_ylabel(r'$\mathregular{\sigma_{\phi}/\sigma_{z}}$')
+	ax.set_xlabel('d [kpc]')
+
+	ax.set_xscale('log')
+	p.clear_axes(ax)
+
+	ax.set_xlim(0.1,5)
+	ax.set_xticks([0.1,0.2,0.5,1.,2.,5.])
+	ax.set_xticklabels([0.1,0.2,0.5,1.,2.,5.])
+	# ax.set_xticks([0,1,2,3,4,5])
+	# ax.set_xticks([0.5,1.5,2.5,3.5,4.5],minor=True)
+	
+	ax.set_ylim(0,6)
+	# ax.set_yticks([10,20,30,40,50])
+	# ax.set_yticks([5,15,25,35,45],minor=True)
+
+	p.finalize(fig,fname='sigma_disk_profile_'+savenames[j],save=1)
+
 
 def core_radius_sfr(sim):
 	fig,ax = p.makefig(1,figx=7)
@@ -1949,7 +2155,7 @@ def massprofile(sim,snapnum,do_density=False,do_velocity=False,plot_initial=Fals
 	all_profiles = all_profiles[mask]
 
 	for j in range(len(all_types)):
-		text = ax.annotate(all_types[j],xy=(0.05,0.05+(0.04*(j+1))),xycoords='axes fraction',fontsize=11,color=all_colors[j])
+		text = ax.annotate(all_types[j],xy=(0.05,0.3-(0.04*j)),xycoords='axes fraction',fontsize=11,color=all_colors[j])
 		text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor=all_colors[j], edgecolor='white'), path_effects.Normal()])
 		# print(all_types[j])
 
@@ -1961,7 +2167,7 @@ def massprofile(sim,snapnum,do_density=False,do_velocity=False,plot_initial=Fals
 			if all_types[j]=='dark matter':
 				rvir = drange[(density >= 200*rho_c)][-1]
 				# ax.axvline(x=rvir,ls=':',c='grey')
-				print(m.scinote(rvir))
+				# print(m.scinote(rvir))
 				# print(np.amax(drange))
 
 				if plot_initial:
@@ -2031,7 +2237,7 @@ def massprofile(sim,snapnum,do_density=False,do_velocity=False,plot_initial=Fals
 	this_label = models_label[np.where(models==sim)[0][0]]
 
 	if do_density:
-		ax.legend(loc='upper right',frameon=False,prop={'size':11})
+		# ax.legend(loc='upper right',frameon=False,prop={'size':11})
 		fname = 'rho_'+thismassfile+'_'
 		ax.set_ylabel(r'density [M$_\odot$ kpc$^{-3}$]')
 		ax.set_ylim(1e0,3e9)
@@ -2040,7 +2246,10 @@ def massprofile(sim,snapnum,do_density=False,do_velocity=False,plot_initial=Fals
 		# 	ax.annotate('compact dwarf',xy=(0.3,0.11),xycoords='axes fraction',fontsize=11,color='black')
 		# 	ax.annotate(sim[3:],xy=(0.3,0.07),xycoords='axes fraction',fontsize=11,color='black')
 		# else:
-		text = ax.annotate(this_label,xy=(0.3,0.07),xycoords='axes fraction',fontsize=11,color='black')
+		text = ax.annotate(this_label,xy=(0.6,0.92),xycoords='axes fraction',fontsize=11,color='black')
+		text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor=all_colors[j], edgecolor='white'), path_effects.Normal()])
+
+		text = ax.annotate('snapshot '+str(snapnum).zfill(3),xy=(0.6,0.88),xycoords='axes fraction',fontsize=11,color='black')
 		text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor=all_colors[j], edgecolor='white'), path_effects.Normal()])
 
 
@@ -2073,7 +2282,7 @@ def massprofile(sim,snapnum,do_density=False,do_velocity=False,plot_initial=Fals
 	ax.set_xlim(1e-1,1e2)
 	ax.set_yscale('log')
 	
-	p.finalize(fig,fname+str(snapnum).zfill(3),save=0)
+	p.finalize(fig,fname+str(snapnum).zfill(3),save=1)
 
 def plotradius(ptype='core',do_bins=False):
 	fig,ax = p.makefig(1,figx=7)
@@ -2472,7 +2681,7 @@ def alpha_proj(sim,snapnum,bound=10,do_epsilon=True):
 
 	fig,ax = p.makefig(1,figx=8,figy=6)
 	plt.rcParams.update({'savefig.bbox': 'tight', 'savefig.pad_inches':'0.05'})
-	plt.style.use('dark_background')
+	# plt.style.use('dark_background')
 
 	#create mass space for colormap to sample
 	# c = np.linspace(1e-3,1e7,1000)
@@ -2501,17 +2710,23 @@ def alpha_proj(sim,snapnum,bound=10,do_epsilon=True):
 		gas_rho = snapHDF5.read_block(snapfile, 'RHO ', parttype=0) #Msun / kpc^3
 		gas_sfr = snapHDF5.read_block(snapfile, 'SFR ', parttype=0) / (3.154e7) # converted to Msun / sec
 
+		sel_0 = (gas_rho > 0)
+		gas_rho = gas_rho[sel_0]
+		gas_sfr = gas_sfr[sel_0]
+		gasmass = gasmass[sel_0]
+		gas_pos = gas_pos[sel_0]
+
 		tdyn = np.sqrt(3*np.pi/(32*m.Gsim*gas_rho))
 
-		rinf = np.logical_not(np.isnan(tdyn)) & (tdyn < np.inf)
-		tdyn = tdyn[rinf]
-		gas_sfr = gas_sfr[rinf]
-		gasmass = gasmass[rinf]
-		gas_pos = gas_pos[rinf]
+		# rinf = np.logical_not(np.isnan(tdyn)) & (tdyn < np.inf)
+		# tdyn = tdyn[rinf]
+		# gas_sfr = gas_sfr[rinf]
+		# gasmass = gasmass[rinf]
+		# gas_pos = gas_pos[rinf]
 
-		epsilon =gas_sfr/gasmass*tdyn
-		print(np.amin(epsilon))
-		print(np.amax(epsilon))
+		epsilon = (gas_sfr/gasmass)*tdyn
+		# print(np.amin(epsilon))
+		# print(np.amax(epsilon))
 
 	else:
 		gas_virial = snapHDF5.read_block(snapfile, 'ALPH', parttype=0)
@@ -2545,16 +2760,17 @@ def alpha_proj(sim,snapnum,bound=10,do_epsilon=True):
 
 			if np.count_nonzero(this_sel) > 0 :
 				if do_epsilon:
-					meanvalue = np.mean(epsilon[this_sel])
-					colorlabel = r'$\varepsilon$'
-					fname = 'epsilon_proj_'+savenames[i]+'_'+str(snapnum).zfill(3)
-					allvalues = np.append(allvalues,meanvalue)
+					# meanvalue = np.mean(epsilon[this_sel])
+					# colorlabel = r'$\varepsilon$'
+					fname = 'epsilon_hist_'+savenames[i]+'_'+str(snapnum).zfill(3)
+					# allvalues = np.append(allvalues,meanvalue)
+
 				else:
 					meanvalue = np.mean(gas_virial[this_sel])
 					colorlabel = r'$\alpha$'
 					fname = 'alpha_proj_'+savenames[i]+'_'+str(snapnum).zfill(3)
 
-				ax.plot(thisx,thisy,'o',ms=2,mew=0,c=cmap.to_rgba(m.find_nearest(c,meanvalue)))
+					ax.plot(thisx,thisy,'o',ms=2,mew=0,c=cmap.to_rgba(m.find_nearest(c,meanvalue)))
 
 
 	# for j in range(len(gas_virial)):
@@ -2567,16 +2783,25 @@ def alpha_proj(sim,snapnum,bound=10,do_epsilon=True):
 	# print(np.amin(allvalues))
 	# print(allvalues)
 	#----------------------------------------------------------------------------------------------
-	fig.colorbar(cmap,label=r'$\alpha$')
+	if do_epsilon:
+		# fig.colorbar(cmap,label=r'$\varepsilon$')
 
-	ax.annotate(models_label[i],xy=(0.05,0.95),xycoords='axes fraction',fontsize=11,color='white')
-	ax.annotate('snapshot '+str(snapnum).zfill(3),xy=(0.05,0.9),xycoords='axes fraction',fontsize=11,color='white')
+		sel = np.logical_not(np.isnan(epsilon))
 
-	ax.set_xlim(-bound,bound)
-	ax.set_xlabel('x [kpc]')
+		ax.hist(epsilon[sel],histtype='stepfilled',normed=True,bins=30,log=True)
+		ax.set_xlabel(r'SF efficiency, $\varepsilon$')
+		ax.set_xscale('log')
+	else:
+		fig.colorbar(cmap,label=r'$\alpha$')
+		ax.set_xlim(-bound,bound)
+		ax.set_xlabel('x [kpc]')
 
-	ax.set_ylim(-bound,bound)
-	ax.set_ylabel('y [kpc]')
+		ax.set_ylim(-bound,bound)
+		ax.set_ylabel('y [kpc]')
+	
+
+	ax.annotate(models_label[i],xy=(0.25,0.95),xycoords='axes fraction',fontsize=11,color='black')
+	ax.annotate('snapshot '+str(snapnum).zfill(3),xy=(0.25,0.9),xycoords='axes fraction',fontsize=11,color='black')
 
 	p.finalize(fig,fname,save=1)
 
@@ -2697,7 +2922,45 @@ def timescales(sim,snapnum,whichy,whichx):
 	figname = whichy+'_'+whichx+'_'+savenames[i]+'_'+str(snapnum).zfill(3)
 	p.finalize(fig,figname,save=1)
 
+def masstime():
+	print('plotting type 4 mass versus time')
+	# if not(sim in models):
+	# 	raise ValueError('please use a sim in the list of models')
+	fig,ax = p.makefig(1,figx=8,figy=6)
+	plt.rcParams.update({'savefig.bbox': 'tight', 'savefig.pad_inches':'0.05'})
+	
+	
 
+	for sim in models:
+		i = np.where(models==sim)[0][0]
+
+		f = h5py.File(d.datdir+'massprofiles_'+savenames[i]+'.hdf5','r')
+		type4_profile = np.array(f['type4'])
+		f.close()
+
+		type4mass = np.array([])
+		all_time = np.array([])
+
+		for num in range(len(type4_profile)):
+			type4mass = np.append(type4mass,type4_profile[num][-1])
+
+			all_time = np.append(all_time, snapHDF5.snapshot_header(d.smuggledir + sim + '/snapshot_' + str(num).zfill(3)).time)
+
+		ax.plot(all_time,type4mass,lw=1.6,c=colors_list[i])
+		ax.annotate(models_label[i],xy=(0.7,0.25-(0.05*(i+1))),xycoords='axes fraction',fontsize=11,color=colors_list[i])
+
+
+	ax.set_yscale('log')
+	ax.set_ylim(1e7,1.5*1e8)
+	ax.set_ylabel(r'type 4 mass [M$_\odot$]')
+
+	# ax.set_xscale('log')
+	ax.set_xlim(0,2)
+	ax.set_xticks([0,0.5,1,1.5,2])
+	ax.set_xticks([0.25,0.75,1.25,1.75],minor=True)
+	ax.set_xlabel('time [Gyr]')
+
+	p.finalize(fig,'masstime_'+whichsims,save=1)
 
 
 
@@ -2756,12 +3019,31 @@ ww = 0.5
 # 	calc.calculate_mass_profiles(sim,savenames[i])
 
 # sfr_time()
-plotradius()
+# plotradius()
+
+# sfr_time()
+# masstime()
+
+# panel_projection_single('compact_dwarf/ff_tiny_1e5',200,show_progress=False)
+# panel_projection_single('compact_dwarf/fiducial_1e5',200,show_progress=False)
+
+# plot_sigma_radial('compact_dwarf/ff_tiny_1e5')
+# plot_sigma_radial('compact_dwarf/fiducial_1e5')
+
+# plot_sigma_disk('compact_dwarf/ff_tiny_1e5')
+# plot_sigma_disk('compact_dwarf/fiducial_1e5')
+
+for sim in models:
+	calc.calculate_sigma_profile(sim,savenames[np.where(models==sim)[0][0]],snapnum=200)
+	plot_sigma_radial(sim,snapnum=200)
+	plot_sigma_disk(sim,snapnum=200)
+
+# massprofile('fiducial_1e5',400,do_density=True)
+# massprofile('compact_dwarf/fiducial_1e5',400,do_density=True)
+# massprofile('compact_dwarf/ff_tiny_1e5',400,do_density=True)
 
 
-
-
-
+# alpha_proj('vareff_1e5',200)
 
 
 #--------------------------------------------------------------------------------------------------

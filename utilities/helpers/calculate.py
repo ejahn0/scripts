@@ -1,6 +1,7 @@
 import numpy as np
 import catalogHDF5 as cat
 import directories as d 
+import math_helper as m
 import snapHDF5, h5py, sys
 h = 0.7
 
@@ -576,20 +577,20 @@ def calculate_timefile():
 
 	timefile.close()
 		 
-def calculate_sigma_profile(sim,snapnum=400):
+def calculate_sigma_profile(sim,savename,snapnum=400):
 	# snapdir = '/mainvol/ejahn/smuggle/output/live_halo/'
 
-	if not(sim in models):
-		raise ValueError('please choose a sim in models')
+	# if not(sim in models):
+	# 	raise ValueError('please choose a sim in models')
 
-	j = np.where(models==sim)[0][0]
+	# j = np.where(models==sim)[0][0]
 
 	h=0.7
 	all_time = np.array([])
 	# drange = np.logspace(-1,2,100)
 	print('analyzing simulation: '+sim)
 
-	sigmaname = d.datdir+'sigma_profile_'+savenames[j]+'.hdf5'
+	sigmaname = d.datdir+'sigma_profile_'+savename+'.hdf5'
 	sigmafile = h5py.File(sigmaname,'w')
 
 	#----------------------------------------------------------------------------------------------
