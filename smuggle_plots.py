@@ -33,13 +33,13 @@ columns = np.int(columns)
 
 # whichsims = 'fixMorph_1e5'
 # whichsims = 'fixISM_1e5'
-whichsims = 'fixMorph_1e6'
+# whichsims = 'fixMorph_1e6'
 # whichsims = 'fixISM_1e6'
 # whichsims = 'vareff_compare'
 # whichsims = 'ff_compare'
 # whichsims = '1e5'
 # whichsims = '1e6'
-# whichsims = 'all'
+whichsims = 'all'
 
 
 models = np.array(['fiducial_1e5',					#0
@@ -2708,16 +2708,25 @@ def alpha_proj(sim,snapnum,bound=10,do_epsilon=True):
 
 	if do_epsilon:
 		gas_rho = snapHDF5.read_block(snapfile, 'RHO ', parttype=0) #Msun / kpc^3
-		gas_sfr = snapHDF5.read_block(snapfile, 'SFR ', parttype=0) / (3.154e7) # converted to Msun / sec
+		gas_sfr = snapHDF5.read_block(snapfile, 'SFR ', parttype=0) #Msun / year
 
-		sel_0 = (gas_rho > 0)
-		gas_rho = gas_rho[sel_0]
-		gas_sfr = gas_sfr[sel_0]
-		gasmass = gasmass[sel_0]
-		gas_pos = gas_pos[sel_0]
+		gas_rho = gas_rho*6.768e-32 #now in cgs (g/cm^3)
+		G_cgs = 6.6743e-8 #cm^3 / (g s^2)
 
-		tdyn = np.sqrt(3*np.pi/(32*m.Gsim*gas_rho))
 
+		tdyn = np.sqrt(3*np.pi/(32*G_cgs*gas_rho)) #should be in seconds
+		tdyn = tdyn / (3.154e7) #should now be in years
+
+		print('butts')
+
+
+		# sel_0 = (gas_rho > 0)
+		# gas_rho = gas_rho[sel_0]
+		# gas_sfr = gas_sfr[sel_0]
+		# gasmass = gasmass[sel_0]
+		# gas_pos = gas_pos[sel_0]
+
+		#tdyn = np.sqrt(3*np.pi/(32*m.Gsim*gas_rho))
 		# rinf = np.logical_not(np.isnan(tdyn)) & (tdyn < np.inf)
 		# tdyn = tdyn[rinf]
 		# gas_sfr = gas_sfr[rinf]
@@ -2803,7 +2812,7 @@ def alpha_proj(sim,snapnum,bound=10,do_epsilon=True):
 	ax.annotate(models_label[i],xy=(0.25,0.95),xycoords='axes fraction',fontsize=11,color='black')
 	ax.annotate('snapshot '+str(snapnum).zfill(3),xy=(0.25,0.9),xycoords='axes fraction',fontsize=11,color='black')
 
-	p.finalize(fig,fname,save=1)
+	p.finalize(fig,fname,save=0)
 
 def dicintio_test():
 	fig,ax = p.makefig(1)
@@ -3033,17 +3042,17 @@ ww = 0.5
 # plot_sigma_disk('compact_dwarf/ff_tiny_1e5')
 # plot_sigma_disk('compact_dwarf/fiducial_1e5')
 
-for sim in models:
-	calc.calculate_sigma_profile(sim,savenames[np.where(models==sim)[0][0]],snapnum=200)
-	plot_sigma_radial(sim,snapnum=200)
-	plot_sigma_disk(sim,snapnum=200)
+# for sim in models:
+# 	calc.calculate_sigma_profile(sim,savenames[np.where(models==sim)[0][0]],snapnum=199)
+# 	plot_sigma_radial(sim,snapnum=199)
+# 	plot_sigma_disk(sim,snapnum=199)
 
 # massprofile('fiducial_1e5',400,do_density=True)
 # massprofile('compact_dwarf/fiducial_1e5',400,do_density=True)
 # massprofile('compact_dwarf/ff_tiny_1e5',400,do_density=True)
 
 
-# alpha_proj('vareff_1e5',200)
+alpha_proj('vareff_1e5',200)
 
 
 #--------------------------------------------------------------------------------------------------
