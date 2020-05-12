@@ -83,6 +83,7 @@ def makefig(n_panels=1,height=2.5,figx=6,figy=6):
 		fig.subplots_adjust(wspace=0)
 		fig.subplots_adjust(hspace=0)
 		return fig, ax, axarr
+	
 	elif n_panels=='3_horiz':
 		fig, axarr = plt.subplots(nrows=1, ncols=3, sharey='row', figsize=(figx,figy)) 
 		# plt.rc('text', usetex=True)

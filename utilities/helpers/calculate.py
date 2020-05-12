@@ -937,7 +937,7 @@ def print_total_mass(snapnum=200):
 
 	print(m.scinote(np.sum(darkmass)))
 
-def calculate_mass_profiles(sim,savename):
+def calculate_mass_profiles(sim,savename,outdir):
 	# if not(sim in models):
 	# 	raise ValueError('please choose a sim in models')
 
@@ -979,7 +979,7 @@ def calculate_mass_profiles(sim,savename):
 	from os import listdir
 	from os.path import isfile, join
 
-	mypath = d.smuggledir+sim
+	mypath = outdir+sim
 
 	onlyfiles = np.array([f for f in listdir(mypath) if isfile(join(mypath, f))])
 	a = onlyfiles[np.flatnonzero(np.core.defchararray.find(onlyfiles,'snapshot')!=-1)]
@@ -994,7 +994,7 @@ def calculate_mass_profiles(sim,savename):
 		print('previously read up to: '+str(min_snap)+'\nnow reading up to: '+str(max_snap))
 
 		for snapnum in range(min_snap,max_snap+1):
-			snapfile = d.smuggledir+sim+'/snapshot_'+str(snapnum).zfill(3)
+			snapfile = mypath+'/snapshot_'+str(snapnum).zfill(3)
 
 			# print(snapfile)
 			printthing = 'calculating snapshot '+str(snapnum).zfill(3)+'/'+str(max_snap).zfill(3)
