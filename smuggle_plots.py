@@ -3,10 +3,11 @@ import os, sys, pdb, h5py, warnings, time, math, snapHDF5
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as path_effects
-from pylab import *
+# from pylab import *
 import plot_helper as p
 import math_helper as m
 import directories as d
+import plot_nfw as nfw
 import calculate as calc
 import mycolors as c
 import matplotlib.colors as mplcolors
@@ -24,6 +25,8 @@ rows, columns = os.popen('stty size', 'r').read().split()
 rows = np.int(rows)
 columns = np.int(columns)
 
+
+
 #--------------------------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------
@@ -34,46 +37,36 @@ columns = np.int(columns)
 # whichsims = 'fixMorph_1e5'
 # whichsims = 'fixISM_1e5'
 # whichsims = 'fixMorph_1e6'
-whichsims = 'fixISM_1e6'
+# whichsims = 'fixISM_1e6'
 # whichsims = 'vareff_compare'
 # whichsims = 'ff_converge'
 # whichsims = '1e5'
 # whichsims = '1e6'
-# whichsims = 'all'
+whichsims = 'all'
+# whichsims = 'comp_cd_rlx_1e5'
 
-
-outdirs = np.array([d.smuggledir,		#0
-					d.smuggledir,		#1
-					d.smuggledir,		#2
-					d.smuggledir,		#3
-					d.smuggledir,		#4
-					d.smuggledir,		#5
-					d.smuggledir,		#6
-					d.smuggledir,		#7
-					d.smuggledir,		#8
-					d.smuggledir,		#9
-					d.smuggledir, 		#10
-					'/home/ejahn003/smuggle/output/',		#11
-					])
+#save names should be replaced with models
 
 
 models = np.array(['fiducial_1e5',					#0
-				   'compact_dwarf/fiducial_1e5',	#1
-				   'compact_dwarf/ff_tiny_1e5',		#2
-				   'vareff_1e5',					#3
-				   'vareff_v2_1e5',					#4
-				   'eSF100_1e5',					#5
-				   'rho0.1_1e5',					#6
-				   'fiducial_1e6',					#7
-				   'eSF100_1e6',					#8
-				   'rho0.1_1e6',					#9
-				   'vareff_1e6',					#10
-				   'ff_tiny_1e6'					#11
-				   ])
+					  'compact_1e5',				#1		cd_fiducial_1e5
+					  'tiny_1e5',					#2		cd_ff_tiny_1e5
+				   	  'vareff_1e5',					#3
+				   	  'vareff_v2_1e5',				#4
+				   	  'eSF100_1e5',					#5
+				   	  'rho0.1_1e5',					#6
+				   	  'fiducial_1e6',				#7
+				   	  'eSF100_1e6',					#8
+				   	  'rho0.1_1e6',					#9
+				   	  'vareff_1e6',					#10
+				   	  'tiny_1e6',					#11
+				   	  'cd_rlx_1e5',					#12 	cdffrlx_1e5
+				   	  'cd_rlx_sf_1e5'				#13])	cdffrlx_sf_1e5
+				   	  ])
 
 models_label = np.array(['fiducial 1e5',							#0
-						 'compact dwarf, ff 1e5',					#1
-						 'tiny dwarf, ff 1e5',						#2
+						 'compact dwarf 1e5',						#1
+						 'tiny dwarf 1e5',							#2
 						 'var. eff. 1e5',							#3
 						 'var. eff. v2 1e5',						#4
 						 r'$\varepsilon_\mathregular{SF}$=1 1e5',	#5
@@ -82,60 +75,65 @@ models_label = np.array(['fiducial 1e5',							#0
 						 r'$\epsilon_\mathregular{SF}$=1 1e6',		#8
 						 r'$n_\mathregular{th}$=0.1cm$^{-3}$ 1e6',	#9
 						 'var. eff. 1e6',							#10
-						 'tiny dwarf 1e6'							#11
+						 'tiny dwarf 1e6',							#11
+						 'cd adiabatic 1e5',						#12
+						 'cd relaxed 1e5'							#13
 						 ])
 
 colors_list = np.array(['black',			#0	
 				   		'purple',			#1	
 				   		'orange',			#2	
-				   		'blue',	#3
-				   		'darkturquoise',				#4
+				   		'blue',				#3
+				   		'darkturquoise',	#4
 				   		'firebrick',		#5
 				   		'violet',			#6
-				   		'black',			#7
+				   		'grey',			#7
 				   		'firebrick',		#8
 				   		'violet',			#9
 				   		'darkturquoise',	#10
-				   		'orange'			#11
+				   		'orange',			#11
+				   		'blue',				#12
+				   		'red'				#13
 				   		])
 
-ls_list = np.array(['-', #0
-					'-', #1
-					'-', #2
-					'-', #3
-					'-', #4
-					'-', #5
-					'-', #6
-					'-', #7
-					])
+
 
 if whichsims in models:
-	mask = np.zeros(8).astype('bool')
+	mask = np.zeros(len(models)).astype('bool')
 	mask[np.where(models==whichsims)[0][0]] = True
-													#0      1      2      3      4      5      6      7      8      9      10     11
-elif whichsims=='fixMorph_1e5':		mask = np.array([True , False, False, False, True , True , True , False, False, False, False, False])
-elif whichsims=='fixISM_1e5':		mask = np.array([True , True , True , False, False, False, False, False, False, False, False, False])
-elif whichsims=='fixMorph_1e6':		mask = np.array([False, False, False, False, False, False, False, True , True , True , True , False])
-elif whichsims=='fixISM_1e6':		mask = np.array([False, False, False, False, False, False, False, True , False, False, False, True ])
-elif whichsims=='vareff_compare': 	mask = np.array([False, False, False, True , True , False, False, False, False, False, False, False])
-elif whichsims=='ff_converge':		mask = np.array([True,  False, False, False, False, False, False, True , False, False, False, False])
-elif whichsims=='1e5':				mask = np.array([True , True , True , True , True , True , True , False, False, False, False, False])
-elif whichsims=='1e6': 				mask = np.array([False, False, False, False, False, False, False, True , True , True , True , True ])
-elif whichsims=='all':				mask = np.array([True , True , True , True , True , True , True , True , True , True , True , True ])
+														#0      1      2      3      4      5      6      7      8      9      10     11    12    13
+elif whichsims=='fixMorph_1e5':			mask = np.array([True , False, False, False, True , True , True , False, False, False, False, False,False,False])
+elif whichsims=='fixISM_1e5':			mask = np.array([True , True , True , False, False, False, False, False, False, False, False, False,False,False])
+elif whichsims=='fixMorph_1e6':			mask = np.array([False, False, False, False, False, False, False, True , True , True , True , False,False,False])
+elif whichsims=='fixISM_1e6':			mask = np.array([False, False, False, False, False, False, False, True , False, False, False, True ,False,False])
+elif whichsims=='vareff_compare': 		mask = np.array([False, False, False, True , True , False, False, False, False, False, False, False,False,False])
+elif whichsims=='ff_converge':			mask = np.array([True,  False, False, False, False, False, False, True , False, False, False, False,False,False])
+elif whichsims=='1e5':					mask = np.array([True , True , True , True , True , True , True , False, False, False, False, False,True ,True ])
+elif whichsims=='1e6': 					mask = np.array([False, False, False, False, False, False, False, True , True , True , True , True ,False,False])
+elif whichsims=='all':					mask = np.array([True , True , True , True , True , True , True , True , True , True , True , True ,True ,True ])
+elif whichsims=='comp_cd_rlx_1e5':		mask = np.array([False, True , False, False, False, False, False, False, False, False, False, False,False,True ])
  
 else: raise ValueError('unknown whichsims')
+
+# print('mask',len(mask))
+# print('models',len(models))
+# print('models_label',len(models_label))
+# print('colors_list',len(colors_list))
+# print('outdirs',len(outdirs))
+# print('savenames',len(savenames))
 
 models = models[mask]
 models_label = models_label[mask]
 colors_list = colors_list[mask]
 outdirs = outdirs[mask]
+savenames = savenames[mask]
 
-savenames = np.array([])
-for model in models:
-	if 'compact_dwarf' in model:
-		savenames = np.append(savenames,'cd_'+model.split('/')[-1])
-	else:
-		savenames = np.append(savenames,model)
+# savenames = np.array([])
+# for model in models:
+# 	if 'compact_dwarf' in model:
+# 		savenames = np.append(savenames,'cd_'+model.split('/')[-1])
+# 	else:
+# 		savenames = np.append(savenames,model)
 
 
 #--------------------------------------------------------------------------------------------------
@@ -670,25 +668,21 @@ def multisnap_density_prof():
 
 	plt.savefig('multisnap_density_profile.png',format='png',dpi=300)
 
-def panel_projection_single(sim,snapnum,show_progress=True):
+def panel_projection_single(sim,snapnum,bound=10,show_progress=True,do_rhalf=False,do_rcore=False,do_scale=False):
 
 	if sim in models:
 		i = np.where(models==sim)[0][0]
-		savedir = '/home/ejahn003/movie_frames/'+savenames[i]+'/'
 		thislabel = models_label[i]
 	else:
-		if 'compact_dwarf' in sim:
-			savename = 'cd_'+sim.split('/')[-1]
-		else:
-			savename = sim
-		
-		thislabel=sim.replace('_',' ')
+		raise ValueError('please choose a sim in models')
 
-		savedir = '/home/ejahn003/movie_frames/'+savename+'/'
+	savedir = '/home/ejahn003/movie_frames/'+savenames[i]+'/'
+	savedir = '/home/ejahn003/plots/05.may/'+savenames[i]
 
-	fname = d.smuggledir+sim+'/snapshot_' + str(snapnum).zfill(3)
+	fname = outdirs[i]+sim+'/snapshot_' + str(snapnum).zfill(3)
 
-	fig, axarr = p.makefig(n_panels='2_proj')
+	# fig, axarr = p.makefig(n_panels='2_proj')
+	fig, axarr = p.makefig(n_panels=2)
 	plt.rcParams.update({'savefig.bbox': 'tight', 'savefig.pad_inches':'0.05'})
 	plt.style.use('dark_background')
 
@@ -711,7 +705,7 @@ def panel_projection_single(sim,snapnum,show_progress=True):
 	gas_pos = gas_pos - cm
 
 	#---------------------------------------------
-	gas_ap = 0.1
+	gas_ap = 0.5
 	star_ap = 1
 
 	#---plot-face-on---
@@ -720,24 +714,77 @@ def panel_projection_single(sim,snapnum,show_progress=True):
 	
 	axarr[0].plot(gas_pos[:,0][sel_gas_front],gas_pos[:,1][sel_gas_front],',',c='blue',alpha=gas_ap,zorder=100)
 	if np.sum(strmass) > 0:
-		axarr[0].plot(str_pos[:,0],str_pos[:,1],',',c='orange',alpha=star_ap,zorder=10)
+		axarr[0].plot(str_pos[:,0],str_pos[:,1],',',c='gold',alpha=star_ap,zorder=10)
 	axarr[0].plot(gas_pos[:,0][sel_gas_back],gas_pos[:,1][sel_gas_back],',',c='blue',alpha=gas_ap,zorder=1)	
 	
 	#---plot-edge-on---
 	sel_gas_front = (gas_pos[:,1] > 0)
 	sel_gas_back = (gas_pos[:,1] <= 0)	
 
-	axarr[1].plot(gas_pos[:,0][sel_gas_front],gas_pos[:,2][sel_gas_front],',',c='blue',alpha=0.05,zorder=100)	
+	axarr[1].plot(gas_pos[:,0][sel_gas_front],gas_pos[:,2][sel_gas_front],',',c='blue',alpha=0.2,zorder=100)	
 	if np.sum(strmass) > 0:
-		axarr[1].plot(str_pos[:,0],str_pos[:,2],',',c='orange',alpha=star_ap,zorder=10)
+		axarr[1].plot(str_pos[:,0],str_pos[:,2],',',c='gold',alpha=star_ap,zorder=10)
 	axarr[1].plot(gas_pos[:,0][sel_gas_back],gas_pos[:,2][sel_gas_back],',',c='blue',alpha=gas_ap,zorder=1)
 
-	#---------------------------------------------
-	axarr[0].set_xlim(-10,10)
-	axarr[0].set_ylim(-10,10)
+	height = 0.88
 
-	axarr[1].set_xlim(-10,10)
-	axarr[1].set_ylim(-10,10)
+	if do_rhalf:
+		f = h5py.File(d.datdir+'massprofiles_'+savenames[i]+'.hdf5','r')
+		drange = np.array(f['drange'])
+		star_profile = np.array(f['type4'])[snapnum]
+		f.close()
+		total_star_mass = np.sum(strmass)
+		if total_star_mass > 0:
+			fractional_profile = star_profile / total_star_mass
+			half_index = np.argmin(np.abs(fractional_profile-0.5))
+			star_radius = drange[half_index]
+			circle1 = plt.Circle((0, 0), star_radius, ec='lime',fc='none',lw=1.5,zorder=1e4)
+			axarr[0].add_artist(circle1)
+			circle2 = plt.Circle((0, 0), star_radius, ec='lime',fc='none',lw=1.5,zorder=1e4)
+			axarr[1].add_artist(circle2)
+
+			axarr[0].annotate(r'$r_{\mathregular{h}\ast}$', xy=(0.05, height), xycoords='axes fraction', fontsize=12,color='lime')
+			height = height-0.05
+
+	if do_rcore:
+		f = h5py.File(d.datdir+'massprofiles_'+savenames[i]+'.hdf5','r')
+		drange = np.array(f['drange'])
+		dark_profile_all = np.array(f['dark'])
+		f.close()
+		dark_profile = dark_profile_all[snapnum]
+		dark_profile_0 = dark_profile_all[0]
+		vols = 4./3.*np.pi*(drange**3)
+		density = dark_profile/vols
+		density_0 = dark_profile_0/vols
+		
+		rho_ratio = density_0 / density
+		sel_in_2 = (rho_ratio > 1.4) & (rho_ratio < 1.8)
+		is_2 = np.count_nonzero(sel_in_2)
+
+		if is_2 > 0:
+			ind = np.where(sel_in_2)[0][-1]
+			core_radius = drange[ind]
+			circle3 = plt.Circle((0, 0), core_radius, ec='fuchsia',fc='none',lw=1.5,zorder=1e4)
+			axarr[0].add_artist(circle3)
+			circle4 = plt.Circle((0, 0), core_radius, ec='fuchsia',fc='none',lw=1.5,zorder=1e4)
+			axarr[1].add_artist(circle4)
+
+			axarr[0].annotate(r'$r_\mathregular{core}$', xy=(0.05, height), xycoords='axes fraction', fontsize=12,color='fuchsia')
+
+	if do_scale:
+		sl = bound/5
+		ys = -0.9*bound
+		xs = -0.9*bound
+		axarr[0].plot(np.array([xs,xs+sl]),np.array([ys,ys]),c='red',lw=2,alpha=0.6)
+		axarr[0].annotate(str(np.round(sl,1))+' kpc', xy=(-0.9*bound, -0.85*bound), fontsize=12,color='red',alpha=0.6)
+
+
+	#---------------------------------------------
+	axarr[0].set_xlim(-bound,bound)
+	axarr[0].set_ylim(-bound,bound)
+
+	axarr[1].set_xlim(-bound,bound)
+	axarr[1].set_ylim(-bound,bound)
 	
 	axarr[0].annotate(thislabel, xy=(0.05, 0.93), xycoords='axes fraction', fontsize=12,color='white')
 
@@ -754,7 +801,14 @@ def panel_projection_single(sim,snapnum,show_progress=True):
 		axarr[1].annotate('[',xy=(-9.3,-9.1),color='red',fontsize=10,alpha=0.4)
 		axarr[1].annotate(']',xy=(9.2,-9.1),color='red',fontsize=10,alpha=0.4)
 
-	figname = savedir+'snapshot_'+str(snapnum).zfill(3)+'.png'
+	figname = savedir#+'snapshot_'+str(snapnum).zfill(3)#+'.png'
+
+	if do_rhalf:
+		figname = figname + '_rhalf'
+	if do_rcore:
+		figname = figname + '_rcore'
+	figname = figname + '_snapshot_'+str(snapnum).zfill(3)+'.png'
+
 	print('saving figure: '+figname)
 	plt.savefig(figname,format='png',dpi=200)
 	# plt.show()
@@ -1159,66 +1213,6 @@ def test_core_radius(n,sim):
 
 	p.finalize(fname='rhocore_'+sim+'_'+str(n).zfill(3),save=1)
 
-def radius_v_time(dofrac):
-	fig,ax = p.makefig(1,figx=7)
-	plt.rcParams.update({'savefig.bbox': 'tight', 'savefig.pad_inches':'0.05'})
-	snapdir = '/mainvol/ejahn/smuggle/output/live_halo_02.2020/'
-	h=0.7
-	drange = np.logspace(-1,2,100)
-	colors = np.array(['black','purple','blue','green','orange','red'])
-	corefile = h5py.File(d.datdir+'core_radius.hdf5','r')
-
-	#-------------------------------------------------------------------------------
-	for sim in models:
-		i = np.where(models == sim)[0][0]
-		print(sim)
-
-		massfile = h5py.File(d.datdir+'massprofiles_'+sim+'.hdf5','r')
-
-		all_rhalf = np.array([])
-		all_time = np.array([])
-
-
-		for n in np.arange(10,201):
-			fname = snapdir + sim + '/snapshot_' + str(n).zfill(3)
-			header = snapHDF5.snapshot_header(fname)
-			all_time = np.append(all_time, header.time)
-
-
-			mass_of_r = np.array(massfile['mass_'+str(n).zfill(3)])
-			half_m = np.amax(mass_of_r)/2.
-			nearest_half_m = m.find_nearest(mass_of_r, half_m)
-			rhalf = drange[np.where(mass_of_r==nearest_half_m)[0][0]]
-			all_rhalf = np.append(all_rhalf,rhalf)
-
-
-		
-
-		if dofrac:
-			core_radius = np.array(corefile[sim+'_coreradius'])
-			ax.plot(all_time,core_radius[8:]/all_rhalf,lw=2,alpha=1,c=colors[i],label=models_label[i])
-			ax.set_ylabel(r'r$_\mathregular{core}$ / r$_\mathregular{50\ast}$ ')
-			fname='rfraction'
-		else:
-			ax.plot(all_time,all_rhalf,lw=2,alpha=1,c=colors[i],label=models_label[i])
-			ax.set_ylabel(r'r$_\mathregular{50\ast}$ [kpc]')
-			fname='r50star'
-
-
-		massfile.close()
-
-
-	corefile.close()
-	#-------------------------------------------------------------------------------
-	ax.legend(prop={'size':11},loc='best')#,frameon=False)
-
-	ax.set_xlim(0.05,1)
-	ax.set_xlabel(r'time [$h^{-1}$ Gyr]')
-	ax.set_xticks([0.2,0.4,0.6,0.8,1])
-	ax.set_xticks([0.1,0.3,0.5,0.7,0.9],minor=True)
-
-	p.finalize(fig,fname=fname,save=1)
-
 def plot_sigma_old(q):
 	fig,ax = p.makefig(1,figx=7)
 	plt.rcParams.update({'savefig.bbox': 'tight', 'savefig.pad_inches':'0.05'})
@@ -1557,7 +1551,7 @@ def plot_sigma_profile_all(sim,snapnum=400):
 
 	p.finalize(fig,fname='sigma_profile_'+savenames[j],save=1)
 
-def plot_sigma_radial(sim,snapnum=400):
+def plot_sigma_radial_single(sim,snapnum=400):
 	fig,ax = p.makefig(1,figx=8,figy=5)
 	plt.rcParams.update({'savefig.bbox': 'tight', 'savefig.pad_inches':'0.05'})
 
@@ -1658,6 +1652,58 @@ def plot_sigma_radial(sim,snapnum=400):
 	ax.set_yticks([5,15,25,35,45],minor=True)
 
 	p.finalize(fig,fname='sigma_radial_profile_'+savenames[j],save=1)
+
+def plot_sigma_radial_all(snapnum):
+	fig,ax = p.makefig(1,figx=8,figy=5)
+	plt.rcParams.update({'savefig.bbox': 'tight', 'savefig.pad_inches':'0.05'})
+
+	for sim in models:
+		i = np.where(models==sim)[0][0]
+
+
+		#--read-sigma-for-current-model----------------------------------------------
+		sigmaname = d.datdir+'sigma_profiles_'+savenames[i]+'.hdf5'
+		sigmafile = h5py.File(sigmaname,'r')
+		sigma_star = np.array(sigmafile['sigma_star_'+str(snapnum).zfill(3)])
+		sigma_gas = np.array(sigmafile['sigma_gas_'+str(snapnum).zfill(3)])
+		sigma_coldgas = np.array(sigmafile['sigma_coldgas_'+str(snapnum).zfill(3)])
+		sigmafile.close()
+
+		dbins = np.append(0.,np.logspace(-1,0.7,30))
+		dplt = np.array([])
+
+		for j in np.arange(len(dbins)-1):
+			# left = dbins[i]
+			# right = dbins[i+1]
+			mean = np.mean(np.array([dbins[j],dbins[j+1]]))
+			dplt = np.append(dplt,mean)
+
+		sigma_star_rho = sigma_star[:,0]
+		# sigma_gas_rho = sigma_gas[:,0]
+		# sigma_coldgas_rho = sigma_coldgas[:,0]
+
+		ax.plot(dplt,sigma_star_rho,ls='-',c=colors_list[i],alpha=0.8,lw=2)#,zorder=13)
+
+		simtext = models_label[i]#+'\nsnapshot '+str(snapnum).zfill(3)
+		text = ax.annotate(simtext,xy=(0.1,0.95-(i*0.05)),xycoords='axes fraction',fontsize=12,color=colors_list[i])
+		text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor=colors_list[i], 
+			edgecolor='white'), path_effects.Normal()])
+
+	ax.set_ylabel(r'$\mathregular{\sigma_r}$(stars) [km s$\mathregular{^{-1}}$]')
+	ax.set_xlabel('d [kpc]')
+
+	ax.set_xscale('log')
+	p.clear_axes(ax)
+
+	ax.set_xlim(0.1,5)
+	ax.set_xticks([0.1,0.2,0.5,1.,2.,5.])
+	ax.set_xticklabels([0.1,0.2,0.5,1.,2.,5.])
+
+	ax.set_ylim(0,50)
+	ax.set_yticks([10,20,30,40,50])
+	ax.set_yticks([5,15,25,35,45],minor=True)
+
+	p.finalize(fig,'sigma_r_star_'+whichsims,save=1)
 	
 def plot_sigma_disk(sim,snapnum=400):
 	fig,ax = p.makefig(1,figx=8,figy=5)
@@ -1761,7 +1807,6 @@ def plot_sigma_disk(sim,snapnum=400):
 	# ax.set_yticks([5,15,25,35,45],minor=True)
 
 	p.finalize(fig,fname='sigma_disk_profile_'+savenames[j],save=1)
-
 
 def core_radius_sfr(sim):
 	fig,ax = p.makefig(1,figx=7)
@@ -2112,7 +2157,7 @@ def rotationcurve(snapnum):
 			
 	p.finalize(fig,fname,save=1)
 
-def massprofile(sim,snapnum,do_density=False,do_velocity=False,plot_initial=False,print_radii=False,dicintio=False):
+def massprofile(sim,snapnum,do_density=False,do_velocity=False,plot_initial=False,print_radii=False,dicintio=False,do_slope=False,do_1e6=False):
 
 	if do_density and do_velocity:
 		raise ValueError('cannot plot both density and velocity, please choose one')
@@ -2125,32 +2170,18 @@ def massprofile(sim,snapnum,do_density=False,do_velocity=False,plot_initial=Fals
 	fig,ax = p.makefig(1)
 	plt.rcParams.update({'savefig.bbox': 'tight', 'savefig.pad_inches':'0.05'})
 	ax.plot(1e20,1e20,'k',ls='-',label='snapshot '+str(snapnum).zfill(3))
-
-	# des = 'cd'
-	# des = 'vareff'
-	# all_types = np.array(['total','dark matter','gas','SF gas','type 2','type 3','type 4'])
-	# all_colors = np.array(['grey','black','blue','purple','green','orange','red'])
-
 	all_types = np.array(['total','dark matter','gas','type 2','type 3','type 4'])
 	all_colors = np.array(['grey','black','blue','green','orange','red'])
 
 	mask = np.array([True,True,True,True,True,True])
 	all_types = all_types[mask]
 	all_colors = all_colors[mask]
-
-	# print(all_types)
-
-	# if 'compact_dwarf' in sim:
-	# 	thismassfile = 'cd_' + sim.split('/')[-1]
-	# else:
 	thismassfile = savenames[i]
 
-	# print(thismassfile)
-
 	f = h5py.File(d.datdir+'massprofiles_'+thismassfile+'.hdf5','r')
+	print(d.datdir+'massprofiles_'+thismassfile+'.hdf5')
 	drange = np.array(f['drange'])
 	gas_profile = np.array(f['gas'])[snapnum]
-	# sfgas_profile = np.array(f['sfgas'])[snapnum]
 	dark_profile = np.array(f['dark'])[snapnum]
 	type2_profile = np.array(f['type2'])[snapnum]
 	type3_profile = np.array(f['type3'])[snapnum]
@@ -2161,30 +2192,69 @@ def massprofile(sim,snapnum,do_density=False,do_velocity=False,plot_initial=Fals
 	f.close()
 
 	vols = 4./3.*np.pi*(drange**3)
-	# total_profile = gas_profile + sfgas_profile + dark_profile + type2_profile + type3_profile + type4_profile
 	total_profile = gas_profile + dark_profile + type2_profile + type3_profile + type4_profile
 
-	#-------------------------------------------------------------------------
-	# all_profiles = np.array([total_profile,dark_profile,gas_profile,sfgas_profile,type2_profile,type3_profile,type4_profile])
 	all_profiles = np.array([total_profile,dark_profile,gas_profile,type2_profile,type3_profile,type4_profile])
-
 	all_profiles = all_profiles[mask]
 
+	#-------------------------------------------------------------------------
+	if do_1e6:
+
+		if sim[:-3]+'1e6' in models:
+			f = h5py.File(d.datdir+'massprofiles_'+sim[:-3]+'1e6.hdf5','r')
+			print(d.datdir+'massprofiles_'+sim[:-3]+'1e6.hdf5')
+			hrfile = sim[:-3]+'1e6'
+			hrfile = models[np.where(models==hrfile)[0][0]]
+
+		elif sim.split('/')[1][:-3]+'1e6' in models:
+			f = h5py.File(d.datdir+'massprofiles_'+sim.split('/')[1][:-3]+'1e6.hdf5','r')
+			print(d.datdir+'massprofiles_'+sim.split('/')[1][:-3]+'1e6.hdf5')
+			hrfile = sim.split('/')[1][:-3]+'1e6'
+			hrfile = models_label[np.where(models==hrfile)[0][0]]
+
+		else:
+			f = h5py.File(d.datdir+'massprofiles_fiducial_1e6.hdf5','r')
+			print(d.datdir+'massprofiles_fiducial_1e6.hdf5')
+			hrfile = 'fiducial 1e6'
+
+		max_snap = len(np.array(f['gas'])) - 1
+		drange_6 = np.array(f['drange'])
+
+		if snapnum > max_snap:
+			gas_profile_6 = np.array(f['gas'])[max_snap]
+			dark_profile_6 = np.array(f['dark'])[max_snap]
+			type2_profile_6 = np.array(f['type2'])[max_snap]
+			type3_profile_6 = np.array(f['type3'])[max_snap]
+			type4_profile_6 = np.array(f['type4'])[max_snap]
+		else:
+			gas_profile_6 = np.array(f['gas'])[snapnum]
+			dark_profile_6 = np.array(f['dark'])[snapnum]
+			type2_profile_6 = np.array(f['type2'])[snapnum]
+			type3_profile_6 = np.array(f['type3'])[snapnum]
+			type4_profile_6 = np.array(f['type4'])[snapnum]
+
+		if plot_initial:
+			dark_profile_0_6 = np.array(f['dark'])[0]
+		f.close()
+
+		vols_6 = 4./3.*np.pi*(drange_6**3)
+		total_profile_6 = gas_profile_6 + dark_profile_6 + type2_profile_6 + type3_profile_6 + type4_profile_6
+
+		all_profiles_6 = np.array([total_profile_6,dark_profile_6,gas_profile_6,type2_profile_6,type3_profile_6,type4_profile_6])
+		all_profiles_6 = all_profiles_6[mask]
+
+	#-------------------------------------------------------------------------
 	for j in range(len(all_types)):
-		# text = ax.annotate(all_types[j],xy=(0.05,0.3-(0.04*j)),xycoords='axes fraction',fontsize=11,color=all_colors[j])
-		# text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor=all_colors[j], edgecolor='white'), path_effects.Normal()])
-		# print(all_types[j])
+		text = ax.annotate(all_types[j],xy=(0.05,0.3-(0.04*j)),xycoords='axes fraction',fontsize=11,color=all_colors[j])
+		text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor=all_colors[j], edgecolor='white'), path_effects.Normal()])
 
 		if do_density:
 			rho_c = 3*(h*100)**2/(8*np.pi*m.G) * m.to_Msun_kpc3
 			density = all_profiles[j]/vols
-			ax.plot(drange,density,'-',c=all_colors[j])
+			ax.plot(drange,density,'-',c=all_colors[j],lw=1.5)
 
 			if all_types[j]=='dark matter':
 				rvir = drange[(density >= 200*rho_c)][-1]
-				# ax.axvline(x=rvir,ls=':',c='grey')
-				# print(m.scinote(rvir))
-				# print(np.amax(drange))
 
 				if plot_initial:
 					density_0 = dark_profile_0/vols
@@ -2203,12 +2273,6 @@ def massprofile(sim,snapnum,do_density=False,do_velocity=False,plot_initial=Fals
 					ax.axvline(x=core_radius,c='purple',alpha=0.6,label='core radius')
 
 				if dicintio:
-					# if 'cd' in sim:
-					# 	snapdir += 'compact_dwarf/'
-					# 	snapdir += sim[3:]
-					# else:
-					# 	snapdir += sim
-
 					snapfile = d.smuggledir + sim + '/snapshot_'+str(snapnum).zfill(3)
 
 					darkmass = snapHDF5.read_block(snapfile, 'MASS', parttype=1)*(1.e10)/h
@@ -2243,6 +2307,28 @@ def massprofile(sim,snapnum,do_density=False,do_velocity=False,plot_initial=Fals
 					#-----------------------------------------------------
 					ax.plot(drange,m.dicintio_profile(best_rho_s,r_s,drange,Mstar,Mhalo),':',lw=1.5,label='Di Cintio Fit',c='red')
 
+				if do_slope:
+					x = drange
+					y = np.log10(density)
+					slope = np.array([])
+
+					for q in range(len(drange)-1):
+						dydx = (y[q+1] - y[q]) / (x[q+1] - x[q])
+						slope = np.append(slope,dydx)
+
+
+					ax2 = ax.twinx()
+					ax2.plot(drange[:-1],slope,c='blue')
+					text = ax.annotate(r'$\frac{d\log{\rho}}{dr}$',xy=(0.6,0.82),xycoords='axes fraction',fontsize=15,color='blue')
+					text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor=all_colors[j], edgecolor='white'), path_effects.Normal()])
+
+			if do_1e6:
+				# print('plotting '+all_types[j]+' 1e6')
+				density_6 = all_profiles_6[j]/vols_6
+				ax.plot(drange_6,density_6,'--',c=all_colors[j])
+
+
+
 		elif do_velocity:
 			ax.plot(drange,np.sqrt(m.Gprime*all_profiles[j]/drange),c=all_colors[j],lw=1.4)#,ls=styles[i])
 
@@ -2257,17 +2343,13 @@ def massprofile(sim,snapnum,do_density=False,do_velocity=False,plot_initial=Fals
 		fname = 'rho_'+thismassfile+'_'
 		ax.set_ylabel(r'density [M$_\odot$ kpc$^{-3}$]')
 		ax.set_ylim(1e0,3e9)
-
-		# if 'dwarf' in sim:
-		# 	ax.annotate('compact dwarf',xy=(0.3,0.11),xycoords='axes fraction',fontsize=11,color='black')
-		# 	ax.annotate(sim[3:],xy=(0.3,0.07),xycoords='axes fraction',fontsize=11,color='black')
-		# else:
-		text = ax.annotate(this_label,xy=(0.6,0.92),xycoords='axes fraction',fontsize=11,color='black')
+		text = ax.annotate(this_label+', snapshot '+str(snapnum).zfill(3),xy=(0.45,0.95),xycoords='axes fraction',fontsize=11,color='black')
 		text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor=all_colors[j], edgecolor='white'), path_effects.Normal()])
 
-		text = ax.annotate('snapshot '+str(snapnum).zfill(3),xy=(0.6,0.88),xycoords='axes fraction',fontsize=11,color='black')
-		text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor=all_colors[j], edgecolor='white'), path_effects.Normal()])
-
+		if do_1e6:
+			text = ax.annotate(hrfile+', snapshot '+str(max_snap).zfill(3)+' --',xy=(0.45,0.91),xycoords='axes fraction',fontsize=11,color='black')
+			text.set_path_effects([path_effects.PathPatchEffect(linewidth=4, facecolor=all_colors[j], edgecolor='white'), path_effects.Normal()])
+			fname = fname + '1e6_' 
 
 
 	elif do_velocity:
@@ -2305,20 +2387,17 @@ def massprofile(sim,snapnum,do_density=False,do_velocity=False,plot_initial=Fals
 	
 	p.finalize(fig,fname+str(snapnum).zfill(3),save=1)
 
-def plotradius(ptype='core',do_bins=False):
+def plotradius(ptypes=np.array(['core','star']),do_bins=False):
 	fig,ax = p.makefig(1,figx=7)
 	plt.rcParams.update({'savefig.bbox': 'tight', 'savefig.pad_inches':'0.05'})
+
+	# print(ptypes)
 
 	for sim in models:
 		print(sim)
 		i = np.where(models==sim)[0][0]
 
-		if 'compact_dwarf' in sim:
-			thismassfile = 'cd_' + sim.split('/')[-1]
-		else:
-			thismassfile = sim
-
-		f = h5py.File(d.datdir+'massprofiles_'+thismassfile+'.hdf5','r')
+		f = h5py.File(d.datdir+'massprofiles_'+savenames[i]+'.hdf5','r')
 		drange = np.array(f['drange'])
 		dark_profile_all = np.array(f['dark'])
 
@@ -2334,16 +2413,23 @@ def plotradius(ptype='core',do_bins=False):
 			header = snapHDF5.snapshot_header(snapfile)
 			time = np.append(time, header.time)
 
-			if ptype=='core':
+			if 'core' in ptypes:
+				# print('calculating core radius')
 				dark_profile = dark_profile_all[snapnum]
 				dark_profile_0 = dark_profile_all[0]
 				vols = 4./3.*np.pi*(drange**3)
-				density = dark_profile/vols
-				density_0 = dark_profile_0/vols
-				
-				rho_ratio = density_0 / density
-				sel_in_2 = (rho_ratio > 1.4) & (rho_ratio < 1.8)
-				is_2 = np.count_nonzero(sel_in_2)
+				# density = dark_profile/vols
+				# density_0 = dark_profile_0/vols				
+				# rho_ratio = density_0 / density
+				# sel_in_2 = (rho_ratio > 1.4) & (rho_ratio < 1.8)
+				# is_2 = np.count_nonzero(sel_in_2)
+
+				avgmassenc = np.array([])
+				avgmassenc_0 = np.array([])
+
+				# for k in range(len(dark_profile)):
+				# 	dark_profile = 
+
 
 				if is_2==0:
 					core_radius = np.append(core_radius,0.)
@@ -2351,7 +2437,8 @@ def plotradius(ptype='core',do_bins=False):
 					ind = np.where(sel_in_2)[0][-1]
 					core_radius = np.append(core_radius,drange[ind])
 
-			elif ptype=='star':
+			if 'star' in ptypes:
+				# print('calculating star radius')
 				star_profile = np.array(f['type4'])[snapnum]
 				total_star_mass = np.sum(snapHDF5.read_block(snapfile, 'MASS', parttype=4)*(1.e10)/h)
 
@@ -2391,12 +2478,7 @@ def plotradius(ptype='core',do_bins=False):
 
 		f.close()
 
-		if ptype=='core':
-			# if '1e6' in sim:
-			# 	lw = 1.3; ls = '--'
-			# else:
-			# 	lw = 1.6; ls = '-'
-			lw = 1.6;ls='-'
+		if 'core' in ptypes:
 
 			if do_bins:
 				timebins = np.linspace(0, 2, 30)
@@ -2410,35 +2492,48 @@ def plotradius(ptype='core',do_bins=False):
 					sel = (time > leftbin) & (time < rightbin)
 					rcore_mean = np.append(rcore_mean, np.mean(core_radius[sel]))
 
-				ax.plot(timebins[0:-1]+binwidth,rcore_mean,color=colors_list[i],linewidth=lw,alpha=0.7,ls=ls)
+				ax.plot(timebins[0:-1]+binwidth,rcore_mean,color=colors_list[i],lw=1.6,alpha=1,ls='-')
 				# ax.annotate(models_label[i],xy=(0.05,1-(0.05*(i+1))),xycoords='axes fraction',fontsize=11,color=colors_list[i])
 
 			else:
-				ax.plot(time,core_radius,colors_list[i],lw=lw,ls=ls,alpha=0.7)
+				# print('plotting core radius')
+				ax.plot(time,core_radius,colors_list[i],lw=1.6,ls='-',alpha=1)
 			
-			ax.set_ylabel(r'$r_\mathregular{core}$ [kpc]')
-			fname = 'radius_core_'+whichsims
-			ax.annotate(models_label[i]+' ',xy=(0.05,0.98-(0.04*(i+1))),xycoords='axes fraction',fontsize=11,color=colors_list[i])
+			ax.set_ylabel(r'radius [kpc]')
+			fname = 'radius_core+star_'+whichsims
+			ax.annotate(models_label[i]+' ',xy=(0.7,0.95-(0.04*(i+1))),xycoords='axes fraction',fontsize=11,color=colors_list[i])
 			
+			
+
 			# ax.axvline(x=0.90)	
 			# ax.axvline(x=1.08)	
 
-		elif ptype=='star':
-			ax.plot(time,star_radius,colors_list[i],lw=1.6,alpha=0.7)
-			ax.set_ylabel(r'$r_\mathregular{50\ast}$ [kpc]')
-			fname = 'radius_star_'+whichsims
-			ax.set_ylim(0,5.5)
-			ax.set_yticks([0,1,2,3,4,5])
-			ax.set_yticks([0.5,1.5,2.5,3.5,4.5,5.5],minor=True)
-			ax.annotate(models_label[i],xy=(0.65,0.98-(0.04*(i+1))),xycoords='axes fraction',fontsize=11,color=colors_list[i])
+		if 'star' in ptypes:
+			# print('calculating core radius')
+			ax.plot(time,star_radius,colors_list[i],ls='--',lw=1,alpha=0.7)
+			
+			ax.set_ylim(0,4)
+			# ax.set_ylabel(r'$r_\mathregular{50\ast}$ [kpc]')
+			# fname = 'radius_star_'+whichsims
+			# ax.set_ylim(0,5.5)
+			# ax.set_yticks([0,1,2,3,4,5])
+			# ax.set_yticks([0.5,1.5,2.5,3.5,4.5,5.5],minor=True)
+			# ax.annotate(models_label[i],xy=(0.65,0.98-(0.04*(i+1))),xycoords='axes fraction',fontsize=11,color=colors_list[i])
 		
-		elif ptype=='ratio':
-			ax.plot(time[5:],core_radius[5:]/star_radius[5:],colors_list[i],lw=1.6,alpha=0.7)
-			ax.set_ylabel(r'$r_\mathregular{core}/r_\mathregular{50\ast}$ [kpc]')
-			fname = 'radius_frac_'+whichsims
-			ax.set_ylim(0,0.8)
-			ax.annotate(models_label[i],xy=(0.05,0.98-(0.04*(i+1))),xycoords='axes fraction',fontsize=11,color=colors_list[i])
+		# elif ptype=='ratio':
+		# 	ax.plot(time[5:],core_radius[5:]/star_radius[5:],colors_list[i],lw=1.6,alpha=0.7)
+		# 	ax.set_ylabel(r'$r_\mathregular{core}/r_\mathregular{50\ast}$ [kpc]')
+		# 	fname = 'radius_frac_'+whichsims
+		# 	ax.set_ylim(0,0.8)
+		# 	ax.annotate(models_label[i],xy=(0.05,0.98-(0.04*(i+1))),xycoords='axes fraction',fontsize=11,color=colors_list[i])
+	if 'core' in ptypes:
+	# 	ax.plot(1e10,1e10,'-',c='k',label=r'$r_\mathregular{core}$')
+		ax.annotate(r'solid: $r_\mathregular{core}$',xy=(0.7,0.9-(0.04*(i+1))),xycoords='axes fraction',fontsize=11,color='k')
+	if 'star' in ptypes:
+	# 	ax.plot(1e10,1e10,'--',c='k',label=r'$r_\mathregular{h\ast}$')
+		ax.annotate(r'dashed: $r_\mathregular{h\ast}$',xy=(0.7,0.9-(0.04*(i+2))),xycoords='axes fraction',fontsize=11,color='k')
 
+	ax.legend(frameon=False,loc='upper right',prop={'size':11})
 	ax.set_xlabel(r'time [$h^{-1}$ Gyr]')
 	ax.set_xlim(0,2)
 	
@@ -2510,11 +2605,12 @@ def mass_v_time(dcut=5):
 	fig,ax = p.makefig(1)
 	plt.rcParams.update({'savefig.bbox': 'tight', 'savefig.pad_inches':'0.05'})
 
-	time = np.array([])
+	
 
 	for sim in models:
 		print(sim)
 		i = np.where(models==sim)[0][0]
+		time = np.array([])
 
 		if 'compact_dwarf' in sim:
 			thismassfile = 'cd_' + sim.split('/')[-1]
@@ -2528,12 +2624,14 @@ def mass_v_time(dcut=5):
 		gas_mass = np.array([])
 		type4_mass = np.array([])
 
-		for snapnum in range(1,401):
+		max_snap = len(np.array(f['gas']))
+
+		for snapnum in range(1,max_snap):
 			snapfile = d.smuggledir+sim+'/snapshot_'+str(snapnum).zfill(3)
 
-			if sim == models[0]:
-				header = snapHDF5.snapshot_header(snapfile)
-				time = np.append(time, header.time)
+
+			header = snapHDF5.snapshot_header(snapfile)
+			time = np.append(time, header.time)
 
 			gas_profile = np.array(f['gas'])[snapnum]
 			type4_profile = np.array(f['type4'])[snapnum]
@@ -2694,7 +2792,7 @@ def outflow_velocity(sim,snapnum,vtype,dist,width,save=True,exclude=False):
 	plt.savefig('/home/ejahn003/movie_frames/'+thisname,format='png',dpi=200)
 	# plt.show()
 
-def alpha_proj(sim,snapnum,bound=10,do_epsilon=True):
+def alpha_proj(sim,snapnum,bound=10,do_epsilon=True,do_hist=True):
 	if not(sim in models):
 		raise ValueError('please choose one of the available simulations')
 
@@ -2702,18 +2800,20 @@ def alpha_proj(sim,snapnum,bound=10,do_epsilon=True):
 
 	fig,ax = p.makefig(1,figx=8,figy=6)
 	plt.rcParams.update({'savefig.bbox': 'tight', 'savefig.pad_inches':'0.05'})
-	plt.style.use('dark_background')
+	if not(do_hist):
+		plt.style.use('dark_background')
 
 	#create mass space for colormap to sample
 	# c = np.linspace(1e-3,1e7,1000)
-	c = np.logspace(-3,0,1000)
+	# c = np.logspace(-3,0,1000)
+	c = np.linspace(-2,0)
 	norm = mplcolors.Normalize(vmin=c.min(), vmax=c.max())
 	cmap = cm.ScalarMappable(norm=norm, cmap=cm.plasma_r)
 	cmap.set_array([])
 
 	#----------------------------------------------------------------------------------------------
-	snapfile = d.smuggledir+sim+'/snapshot_'+str(snapnum).zfill(3)
-	print(snapfile)
+	snapfile = outdirs[i]+sim+'/snapshot_'+str(snapnum).zfill(3)
+	# print(snapfile)
 
 	darkmass = snapHDF5.read_block(snapfile, 'MASS', parttype=1)*(1.e10)/h
 	dark_pos = snapHDF5.read_block(snapfile, 'POS ', parttype=1)/h
@@ -2753,71 +2853,101 @@ def alpha_proj(sim,snapnum,bound=10,do_epsilon=True):
 		# gas_pos = gas_pos[rinf]
 
 		epsilon = (gas_sfr/gasmass)*tdyn
+
+		# epsilon = epsilon[(epsilon > 0)]
+		# gas_pos = gas_pos[(epsilon > 0)]
+
+		# print(len(epsilon))
 		# print(np.amin(epsilon))
 		# print(np.amax(epsilon))
 
 	else:
 		gas_virial = snapHDF5.read_block(snapfile, 'ALPH', parttype=0)
 	#----------------------------------------------------------------------------------------------
+	if do_hist:
+		fname='snapshot_'+str(snapnum).zfill(3)
+		sel = np.logical_not(np.isnan(epsilon)) & (epsilon != 0)
 
-	xbins = np.linspace(-bound,bound,200)
-	ybins = np.linspace(-bound,bound,200)
-	bw = (xbins[1] - xbins[0])/2
+		if len(epsilon[sel])==0:
+			return
 
-	total = len(xbins)-1
-	
-	allvalues = np.array([])
+		ax.hist(epsilon[sel],histtype='step',normed=True,bins=30,log=True,lw=2,color='darkturquoise')
+		ax.hist(epsilon[sel],histtype='stepfilled',normed=True,bins=30,log=True,lw=0,color='darkturquoise',alpha=0.3)
+		
+		ax.annotate('n='+str(len(epsilon[sel])),xy=(0.65,0.95),xycoords='axes fraction',fontsize=11,color='black')
 
-	for j in range(total):
-		selx = (gas_pos[:,0] > xbins[j]) & (gas_pos[:,0] < xbins[j+1])
-		thisx = xbins[j]+bw
+		ax.set_xlim(1e-2,1)
+		ax.set_xlabel(r'SF efficiency, $\varepsilon$')
+		ax.set_xscale('log')
 
-		printthing = str(np.round(j/2,0))+'%'
-		# print(np.int(j/(total-1)*columns))/
+		ax.set_ylabel('frequency')
+		ax.set_ylim(1e-1,1e2)
+		
 
-		# printthing = '['+('-'*np.int(j/(total-1)*(columns-2))).ljust(columns-2,' ')+']'
-		sys.stdout.write(printthing)
-		sys.stdout.flush()
-		sys.stdout.write("\b" * (len(printthing)))
-
-		for k in range(len(ybins)-1):
-			sely = (gas_pos[:,1] > ybins[k]) & (gas_pos[:,1] < ybins[k+1])
-			thisy = ybins[k]+bw
-
-			this_sel = selx & sely & (gas_pos[:,2] > -1) & (gas_pos[:,2] < 1)
-
-			if np.count_nonzero(this_sel) > 0 :
-				if do_epsilon:
-					meanvalue = np.mean(epsilon[this_sel])
-					ax.plot(thisx,thisy,'o',ms=2,mew=0,c=cmap.to_rgba(m.find_nearest(c,meanvalue)))
-
-				else:
-					meanvalue = np.mean(gas_virial[this_sel])
-					ax.plot(thisx,thisy,'o',ms=2,mew=0,c=cmap.to_rgba(m.find_nearest(c,meanvalue)))
-
-	#----------------------------------------------------------------------------------------------
-	if do_epsilon:
-		fname = 'epsilon_proj_'+savenames[i]+'_'+str(snapnum).zfill(3)
-		fig.colorbar(cmap,label=r'$\varepsilon$')
-		# sel = np.logical_not(np.isnan(epsilon))
-		# ax.hist(epsilon[sel],histtype='stepfilled',normed=True,bins=30,log=True)
-		# ax.set_xlabel(r'SF efficiency, $\varepsilon$')
-		# ax.set_xscale('log')
 	else:
-		fname = 'alpha_proj_'+savenames[i]+'_'+str(snapnum).zfill(3)
-		fig.colorbar(cmap,label=r'$\alpha$')
-	
+		# xbins = np.linspace(-bound,bound,200)
+		# ybins = np.linspace(-bound,bound,200)
+		# bw = (xbins[1] - xbins[0])/2
 
-	ax.set_xlim(-bound,bound)
-	ax.set_xlabel('x [kpc]')
-	ax.set_ylim(-bound,bound)
-	ax.set_ylabel('y [kpc]')
-	
+		# total = len(xbins)-1
+		
+		# allvalues = np.array([])
 
-	ax.annotate(models_label[i],xy=(0.25,0.95),xycoords='axes fraction',fontsize=11,color='black')
-	ax.annotate('snapshot '+str(snapnum).zfill(3),xy=(0.25,0.9),xycoords='axes fraction',fontsize=11,color='black')
+		# for j in range(total):
+		# 	selx = (gas_pos[:,0] > xbins[j]) & (gas_pos[:,0] < xbins[j+1])
+		# 	thisx = xbins[j]+bw
 
-	p.finalize(fig,fname,save=1)
+		# 	printthing = str(np.round(j/2,0))+'%'
+		# 	# print(np.int(j/(total-1)*columns))/
+
+		# 	# printthing = '['+('-'*np.int(j/(total-1)*(columns-2))).ljust(columns-2,' ')+']'
+		# 	sys.stdout.write(printthing)
+		# 	sys.stdout.flush()
+		# 	sys.stdout.write("\b" * (len(printthing)))
+
+		# 	for k in range(len(ybins)-1):
+		# 		sely = (gas_pos[:,1] > ybins[k]) & (gas_pos[:,1] < ybins[k+1])
+		# 		thisy = ybins[k]+bw
+
+		# 		this_sel = selx & sely & (gas_pos[:,2] > -1) & (gas_pos[:,2] < 1)
+
+		# 		if (np.count_nonzero(this_sel) > 0):
+		# 			if do_epsilon:
+		# 				meanvalue = np.mean(epsilon[this_sel])
+		# 				if meanvalue > 0:
+		# 					ax.plot(thisx,thisy,'o',ms=2,mew=0,c=cmap.to_rgba(m.find_nearest(c,np.log10(meanvalue))))
+
+		# 			else:
+		# 				meanvalue = np.mean(gas_virial[this_sel])
+		# 				ax.plot(thisx,thisy,'o',ms=2,mew=0,c=cmap.to_rgba(m.find_nearest(c,np.log10(meanvalue))))
+		epsilon = epsilon[(epsilon != 0)]
+		gas_pos = gas_pos[(epsilon != 0)]
+		print(epsilon.shape)
+		print(gas_pos.shape)
+		for j in range(len(epsilon)):
+			ax.plot(gas_pos[j,0],gas_pos[j,1],'o',ms=2,mew=0,c=cmap.to_rgba(m.find_nearest(c,np.log10(epsilon[j]))))
+
+
+		#----------------------------------------------------------------------------------------------
+		if do_epsilon:
+			fname = 'epsilon_proj_'+savenames[i]+'_'+str(snapnum).zfill(3)
+			fig.colorbar(cmap,label=r'log$_{10}(\varepsilon)$')
+		else:
+			fname = 'alpha_proj_'+savenames[i]+'_'+str(snapnum).zfill(3)
+			fig.colorbar(cmap,label=r'$\alpha$')
+
+		ax.set_xlim(-bound,bound)
+		ax.set_xlabel('x [kpc]')
+		ax.set_ylim(-bound,bound)
+		ax.set_ylabel('y [kpc]')
+
+	ax.annotate(models_label[i],xy=(0.05,0.95),xycoords='axes fraction',fontsize=11,color='black')
+	ax.annotate('snapshot '+str(snapnum).zfill(3),xy=(0.05,0.9),xycoords='axes fraction',fontsize=11,color='black')
+
+	# p.finalize(fig,fname,save=0)
+	sd = '/home/ejahn003/movie_frames/epsilon_hist_vareff_v2/'
+	print('saving figure: '+fname+'.png')
+	plt.savefig(sd+fname+'.png',format='png',dpi=200)
 
 def dicintio_test():
 	fig,ax = p.makefig(1)
@@ -3232,6 +3362,181 @@ def three_rho_plots(sim):
 
 	p.finalize(fig,'triple_rho_'+savenames[i],save=1)
 
+def newprofiles(type='rho'):
+	fig,ax = p.makefig(1,figx=6.5,figy=6)
+	plt.rcParams.update({'savefig.bbox': 'tight', 'savefig.pad_inches':'0.05'})
+
+	sims = np.array(['compact_dwarf/fiducial_1e5','fiducial_relaxed_1e5','fiducial_relaxed_sf_1e5'])
+	labels = np.array(['cd ff 1e5','cd adiabatic 1e5','cd relaxed 1e5'])
+	massprofiles = np.array(['cd_fiducial_1e5','cdffrlx_1e5','cdffrlx_sf_1e5'])
+	colors = np.array(['black','blue','red'])
+	snapnums = np.array([400,100,300])
+
+	for sim in sims:
+		i = np.where(sims==sim)[0][0]
+		print(i,sim)
+
+		f = h5py.File(d.datdir+'massprofiles_'+massprofiles[i]+'.hdf5','r')
+
+		dark_profile = np.array(f['dark'])
+		drange = np.array(f['drange'])
+		gas_profile = np.array(f['gas'])
+		type2_profile = np.array(f['type2'])
+		type3_profile = np.array(f['type3'])
+		type4_profile = np.array(f['type4'])
+
+		total_profile = dark_profile[snapnums[i]] + gas_profile[snapnums[i]] + type2_profile[snapnums[i]] + type3_profile[snapnums[i]] + type4_profile[snapnums[i]]
+
+		vols = 4./3.*np.pi*(drange**3)
+
+		
+
+		if type=='vcirc':
+			ax.annotate(labels[i]+', snapshot '+str(snapnums[i]).zfill(3),xy=(0.05,0.95-(i*0.04)),xycoords='axes fraction',fontsize=11,color=colors[i])
+			if i==0:
+				ax.plot(drange,np.sqrt(m.Gprime*dark_profile[snapnums[i]]/drange),c=colors[i],ls='--',label='DM',lw=1.5)
+				ax.plot(drange,np.sqrt(m.Gprime*total_profile/drange),c=colors[i],label='total',lw=1.5)
+				initial_profile = dark_profile[0] + gas_profile[0] + type2_profile[0] + type3_profile[0] + type4_profile[0]
+				ax.plot(drange,np.sqrt(m.Gprime*initial_profile/drange),c='grey',label='initial',lw=1.2)
+			else:
+				ax.plot(drange,np.sqrt(m.Gprime*dark_profile[snapnums[i]]/drange),c=colors[i],ls='--',lw=1.5)
+				ax.plot(drange,np.sqrt(m.Gprime*total_profile/drange),c=colors[i],lw=1.5)	
+
+		elif type=='rho':
+			ax.annotate(labels[i]+', snapshot '+str(snapnums[i]).zfill(3),xy=(0.05,0.25-(i*0.04)),xycoords='axes fraction',fontsize=11,color=colors[i])
+			if i==0:
+				ax.plot(drange,dark_profile[snapnums[i]]/vols,c=colors[i],ls='--',label='DM',lw=1.5)
+				ax.plot(drange,total_profile/vols,c=colors[i],label='total',lw=1.5)
+				initial_profile = dark_profile[0] + gas_profile[0] + type2_profile[0] + type3_profile[0] + type4_profile[0]
+				ax.plot(drange,initial_profile/vols,c='grey',label='initial',lw=1.2)
+			else:
+				ax.plot(drange,dark_profile[snapnums[i]]/vols,c=colors[i],ls='--',lw=1.5)
+				ax.plot(drange,total_profile/vols,c=colors[i],lw=1.5)		
+
+	if type=='rho':
+		ax.set_xlim(0.1,10)
+		ax.set_ylim(1e6,3e9)
+		ax.set_yscale('log')
+		ax.set_ylabel(r'$\rho$ [M$_\odot$ kpc$^{-3}$]')
+		ax.legend(loc='upper right',frameon=False,prop={'size':11})
+	elif type=='vcirc':
+		ax.set_ylabel(r'$v_\mathregular{circ}$ [km s$^{-1}$]')
+		ax.legend(loc='lower right',frameon=False,prop={'size':11})
+		ax.set_xlim(0.1,100)
+
+	ax.set_xscale('log')
+	ax.set_xlabel('distance [kpc]')
+
+
+	p.finalize(fig,type+'cd_relaxed_1e5',save=1)
+
+def plot_tdyn():
+	fig,ax = p.makefig(1)
+	r_range = np.array([1,2,3,4,5])
+	vc_range = np.linspace(30,200,100)
+
+	for r in r_range:
+		tdyn_range = m.dynamical_time(r,vc_range) / (1.e6)
+		ax.plot(vc_range,tdyn_range,label='r = '+str(r)+' kpc')
+
+	# ax.set_xscale('log')
+	ax.legend(frameon=False,prop={'size':11})
+	ax.set_xlabel(r'$v_\mathregular{circ}$ [km s$^{-1}$]')
+	
+	ax.set_yscale('log')
+	ax.set_ylim(1e1,5e4)
+	ax.set_ylabel(r'$t_\mathregular{dyn}$')
+	ax.set_yticks([1e1,1e2,1e3,1e4])
+	ax.set_yticklabels(['10 Myr','100 Myr','1 Gyr'])
+
+	p.finalize(fig,'tdyn',save=0)
+			
+def fit_NFW(sim,snapnum):
+	fig,ax = p.makefig(1)
+	plt.rcParams.update({'savefig.bbox': 'tight', 'savefig.pad_inches':'0.05'})
+
+	if not(sim in models):
+		raise ValueError('please use a sim in the list of models')
+
+	i = np.where(models==sim)[0][0]
+	G = m.Gprime	# kpc * (km/s)^2 / Msun
+	H = 70./1000. 	# 70 km/s/Mpc / 1000 kpc/Mpc = 0.07 km/s/kpc
+	rho_crit = 3*H**2 / (8*np.pi*G) 
+
+	f = h5py.File(d.datdir+'massprofiles_'+savenames[i]+'.hdf5','r')
+	print(d.datdir+'massprofiles_'+savenames[i]+'.hdf5')
+	drange = np.array(f['drange'])
+	dark_profile = np.array(f['dark'])[snapnum]
+	f.close()
+
+	vols = 4./3.*np.pi*(drange**3)
+	rho_DM = dark_profile/vols
+	ax.plot(drange,rho_DM,label=r'$\rho_\mathregular{DM}$')
+
+	r200 = drange[(rho_DM >= 200*rho_crit)][-1]
+	drange_fit = drange[(drange > 1)]
+	rho_DM_fit = rho_DM[(drange > 1)]
+	print(r200)
+	
+	# c_arr = np.linspace(1,30,100)
+	# c_arr = np.arange(1,300)
+	# difference = np.array([])	
+	# for c in c_arr:
+	# 	attempt = nfw.get_rho_NFW(c,r200,h=0.7,r_array=drange_fit)
+	# 	difference = np.append(difference,np.abs(np.sum(attempt - rho_DM_fit)))
+	# c_best = c_arr[np.argmin(difference)]
+
+	c = 10
+	rho_0_range = np.logspace(3,10,200)
+
+	difference = np.array([])
+	for rho_0 in rho_0_range:
+		attempt = nfw.get_rho_NFW(c,r200,rho_0,h=0.7,r_array=drange_fit)
+		difference = np.append(difference,np.abs(np.sum(attempt - rho_DM_fit)))
+
+	best_rho_0 = rho_0_range[np.argmin(difference)]
+
+	#-----------------------------------------------------
+	rho_0_range = np.logspace(np.log10(best_rho_0/10),np.log10(best_rho_0*10),200)
+
+	difference = np.array([])
+	for rho_0 in rho_0_range:
+		attempt = nfw.get_rho_NFW(c,r200,rho_0,h=0.7,r_array=drange_fit)
+		difference = np.append(difference,np.abs(np.sum(attempt - rho_DM_fit)))
+
+	best_rho_0 = rho_0_range[np.argmin(difference)]
+
+	rho_NFW_plt = nfw.get_rho_NFW(c,r200,best_rho_0,h=0.7,r_array=drange)	
+	ax.plot(drange,rho_NFW_plt,label=r'$\rho_\mathregular{NFW}$')
+
+
+	ax.annotate('c = '+str(c),xy=(0.05,0.15),xycoords='axes fraction',fontsize=11,color='k')
+	ax.annotate(r'$\rho_0$ = '+m.scinote(best_rho_0),xy=(0.05,0.1),xycoords='axes fraction',fontsize=11,color='k')
+
+
+	ax.legend(prop={'size':11})
+
+	ax.set_xlim(0.1,100)
+	ax.set_xscale('log')
+	# ax.set_xlabel('$r$ [kpc]')
+	ax.set_xlabel('r [kpc]')
+	ax.set_xticks([0.1,1,10])
+	ax.set_xticklabels([0.1,1,10])
+
+	ax.set_ylim(1e6,1e9)
+	ax.set_yscale('log')
+	ax.set_ylabel(r'$\rho$ [M$_\odot$ kpc$^{-3}$]')
+
+	p.finalize(fig,'fit_NFW',save=0)
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3241,35 +3546,16 @@ def three_rho_plots(sim):
 #--------------------------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------
-dd = 5
-ww = 0.5
+# fit_NFW('fiducial_1e6',2)
 
-# for sim in models:
-	# massprofile(sim,400,do_velocity=True)
-	# calc.calculate_mass_profiles(sim,outdirs[np.where(models==sim)[0][0]],savenames[np.where(models==sim)[0][0]])
+# print(m.scinote(nfw.M_NFW_in_r(15,55,55)))
 
-
-# for sim in models:
-# 	massprofile(sim,199,do_velocity=True)
-
-# calc.calculate_mass_profiles('ff_tiny_1e6','massprofiles_ff_tiny_1e6','/home/ejahn003/smuggle/output/')
-# Jz_profile(199)
-# print(d.smuggledir)
-# alpha_proj('vareff_1e5',198)
-
-
-# list_rcores('fiducial_1e6')
-three_rho_plots('fiducial_1e6')
+# for n in range(119,401):
+# 	alpha_proj('vareff_v2_1e5',n)
 
 
 
-
-
-
-
-
-
-
+panel_projection_single('')
 
 
 
@@ -3281,6 +3567,3 @@ three_rho_plots('fiducial_1e6')
 #--------------------------------------------------------------------------------------------------
 print('\n')
 pdb.set_trace()
-
-
-

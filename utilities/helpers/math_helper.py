@@ -66,6 +66,14 @@ def find_nearest(array, value, getindex=False):
 def scinote(n,digits=2):
 	if n>0:
 		return str(np.round(10**(np.log10(n) % 1), digits))+'e'+str(np.int(np.log10(n)))
+	elif n==np.nan:
+		return 'nan'
+	elif n==np.inf:
+		return 'inf'
+	elif n==-np.inf:
+		return '-inf'
+	elif n==0:
+		return '0'
 	else:
 		n = np.abs(n)
 		return '-'+str(np.round(10**(np.log10(n) % 1), digits))+'e'+str(np.int(np.log10(n)))
@@ -96,5 +104,9 @@ def dicintio_profile(rho_s,r_s,drange,Mstar,Mhalo):
 	alpha,beta,gamma = dicintio_parameters(Mstar,Mhalo)
 	return rho_s / ( (drange/r_s)**gamma  *  (1 + (drange/r_s)**alpha)**((beta-gamma)/alpha) )
 	
+def dynamical_time(r,vc):
+	kpc_to_km = 3.086e16
+	tdyn = (2*np.pi*r*kpc_to_km/vc)/(3.154e7)
 
+	return tdyn
 

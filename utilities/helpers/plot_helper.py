@@ -42,6 +42,7 @@ class MplColorHelper:
 		return self.scalarMap.to_rgba(val)
 
 def makefig(n_panels=1,height=2.5,figx=6,figy=6):
+	# plt.rcParams['text.usetex'] = True
 	if n_panels==1:
 		fig, ax = plt.subplots(figsize=(figx,figy))
 		plt.rc('font', family='serif', size=s)
