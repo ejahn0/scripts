@@ -22,6 +22,7 @@ import hdf5lib
 #descriptions of all datablocks -> add new datablocks here!
 #format -> TAG:[HDF5_NAME, DIMENSION]
 datablocks = { 	"POS ":["Coordinates",3], 
+		"BPOS":["BirthPos",3],
 		"VEL ":["Velocities",3],
 		"ID  ":["ParticleIDs",1],
 		"MASS":["Masses",1],
@@ -35,7 +36,7 @@ datablocks = { 	"POS ":["Coordinates",3],
 		"NH  ":["NeutralHydrogenAbundance",1],
 		"HSML":["SmoothingLength",1],
 		"SFR ":["StarFormationRate",1],
-		"AGE ":["GFM_StellarFormationTime",1],
+		"AGE ":["StellarFormationTime",1], #GFM_
 		"Z   ":["Metallicity",1],
 		"ACCE":["Acceleration",3],
 		"VEVE":["VertexVelocity",3],

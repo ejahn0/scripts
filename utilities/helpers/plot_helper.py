@@ -52,9 +52,24 @@ def makefig(n_panels=1,height=2.5,figx=6,figy=6):
 		ax.tick_params(axis='both',which='major',length=jtl)
 		return fig, ax
 
-	elif n_panels==2:
+	elif n_panels=='2_horiz':
+		fig, axarr = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(figx,figy)) 
+		# plt.rc('text', usetex=True)
+		fig.subplots_adjust(wspace=0);fig.subplots_adjust(hspace=0)
+		plt.rc('font', family='serif',size=s)
+
+		axarr[0].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[1].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+			left=False, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[0].tick_params(axis='both',which='major',length=jtl)
+		axarr[1].tick_params(axis='both',which='major',length=jtl)
+		return fig, axarr
+
+	elif n_panels=='2_vert':
 		fig, axarr = plt.subplots(2, sharex=True, gridspec_kw = {'height_ratios':[height, 1]},figsize=(figx,figy)) 
 		# plt.rc('text', usetex=True)
+		fig.subplots_adjust(wspace=0);fig.subplots_adjust(hspace=0)
 		plt.rc('font', family='serif',size=s)
 
 		axarr[0].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
@@ -64,8 +79,26 @@ def makefig(n_panels=1,height=2.5,figx=6,figy=6):
 		axarr[0].tick_params(axis='both',which='major',length=jtl)
 		axarr[1].tick_params(axis='both',which='major',length=jtl)
 		return fig, axarr
-	
+
 	elif n_panels=='3_vert':
+		fig, axarr = plt.subplots(nrows=3, ncols=1, sharex=True, figsize=(figx,figy)) 
+		# plt.rc('text', usetex=True)
+		plt.rc('font', family='serif',size=s)
+
+		axarr[0].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[1].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[2].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		axarr[0].tick_params(axis='both',which='major',length=jtl)
+		axarr[1].tick_params(axis='both',which='major',length=jtl)
+		axarr[2].tick_params(axis='both',which='major',length=jtl)
+
+		return fig, axarr
+	
+	elif n_panels=='3_vert_weird':
 		plt.rc('font', family='serif',size=s)
 		fig = plt.figure(figsize=(10,7))
 		ax = fig.add_subplot(111)    # The big subplot
@@ -103,6 +136,279 @@ def makefig(n_panels=1,height=2.5,figx=6,figy=6):
 		axarr[0].tick_params(axis='both',which='major',length=jtl)
 		axarr[1].tick_params(axis='both',which='major',length=jtl)
 		axarr[2].tick_params(axis='both',which='major',length=jtl)
+
+		return fig, axarr
+
+	elif n_panels=='4_vert':
+		fig, axarr = plt.subplots(nrows=4, ncols=1, sharex=True, figsize=(figx,figy)) 
+		# plt.rc('text', usetex=True)
+		fig.subplots_adjust(wspace=0);fig.subplots_adjust(hspace=0)
+		plt.rc('font', family='serif',size=s)
+
+		axarr[0].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[1].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[2].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[3].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		axarr[0].tick_params(axis='both',which='major',length=jtl)
+		axarr[1].tick_params(axis='both',which='major',length=jtl)
+		axarr[2].tick_params(axis='both',which='major',length=jtl)
+		axarr[3].tick_params(axis='both',which='major',length=jtl)
+
+		return fig, axarr
+
+	elif n_panels=='5_vert':
+		fig, axarr = plt.subplots(nrows=5, ncols=1, sharex=True, figsize=(figx,figy)) 
+		# plt.rc('text', usetex=True)
+		fig.subplots_adjust(wspace=0);fig.subplots_adjust(hspace=0)
+		plt.rc('font', family='serif',size=s)
+
+		for i in np.arange(5):
+			axarr[i].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+				left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+			axarr[i].tick_params(axis='both',which='major',length=jtl)
+
+		axarr[4].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		return fig, axarr
+
+	elif n_panels=='6_vert':
+		fig, axarr = plt.subplots(nrows=6, ncols=1, sharex=True, figsize=(figx,figy)) 
+		# plt.rc('text', usetex=True)
+		fig.subplots_adjust(wspace=0);fig.subplots_adjust(hspace=0)
+		plt.rc('font', family='serif',size=s)
+
+		for i in np.arange(6):
+			axarr[i].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+				left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+			axarr[i].tick_params(axis='both',which='major',length=jtl)
+
+		axarr[5].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		return fig, axarr
+
+	elif n_panels=='7_vert':
+		fig, axarr = plt.subplots(nrows=7, ncols=1, sharex=True, figsize=(figx,figy)) 
+		# plt.rc('text', usetex=True)
+		fig.subplots_adjust(wspace=0);fig.subplots_adjust(hspace=0)
+		plt.rc('font', family='serif',size=s)
+
+		for i in np.arange(7):
+			axarr[i].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+				left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+			axarr[i].tick_params(axis='both',which='major',length=jtl)
+
+		axarr[6].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		return fig, axarr
+
+	elif n_panels=='4_by_2':
+		fig, axarr = plt.subplots(nrows=4, ncols=2, sharex=True, sharey='row', figsize=(figx,figy)) 
+		# plt.rc('text', usetex=True)
+		fig.subplots_adjust(wspace=0);fig.subplots_adjust(hspace=0)
+		plt.rc('font', family='serif',size=s)
+
+		axarr[0,0].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[1,0].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[2,0].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[3,0].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		axarr[0,0].tick_params(axis='both',which='major',length=jtl)
+		axarr[1,0].tick_params(axis='both',which='major',length=jtl)
+		axarr[2,0].tick_params(axis='both',which='major',length=jtl)
+		axarr[3,0].tick_params(axis='both',which='major',length=jtl)
+
+		axarr[0,1].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+			left=False, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[1,1].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+			left=False, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[2,1].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+			left=False, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[3,1].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+			left=False, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		axarr[0,1].tick_params(axis='both',which='major',length=jtl)
+		axarr[1,1].tick_params(axis='both',which='major',length=jtl)
+		axarr[2,1].tick_params(axis='both',which='major',length=jtl)
+		axarr[3,1].tick_params(axis='both',which='major',length=jtl)
+
+		return fig, axarr
+
+	elif n_panels=='4_by_3':
+		fig, axarr = plt.subplots(nrows=4, ncols=3, sharex=True, sharey='row', figsize=(figx,figy)) 
+		# plt.rc('text', usetex=True)
+		fig.subplots_adjust(wspace=0);fig.subplots_adjust(hspace=0)
+		plt.rc('font', family='serif',size=s)
+
+		axarr[0,0].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[0,1].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[0,2].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[0,3].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		axarr[0,0].tick_params(axis='both',which='major',length=jtl)
+		axarr[0,1].tick_params(axis='both',which='major',length=jtl)
+		axarr[0,2].tick_params(axis='both',which='major',length=jtl)
+		axarr[0,3].tick_params(axis='both',which='major',length=jtl)
+
+		axarr[1,0].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+			left=False, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[1,1].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+			left=False, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[1,2].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+			left=False, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[1,3].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+			left=False, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		axarr[1,0].tick_params(axis='both',which='major',length=jtl)
+		axarr[1,1].tick_params(axis='both',which='major',length=jtl)
+		axarr[1,2].tick_params(axis='both',which='major',length=jtl)
+		axarr[1,3].tick_params(axis='both',which='major',length=jtl)
+
+		axarr[2,0].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+			left=False, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[2,1].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+			left=False, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[2,2].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+			left=False, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+		axarr[2,3].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+			left=False, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		axarr[2,0].tick_params(axis='both',which='major',length=jtl)
+		axarr[2,1].tick_params(axis='both',which='major',length=jtl)
+		axarr[2,2].tick_params(axis='both',which='major',length=jtl)
+		axarr[2,3].tick_params(axis='both',which='major',length=jtl)
+
+		return fig, axarr
+
+	elif n_panels=='4_by_5':
+		fig, axarr = plt.subplots(nrows=4, ncols=5, sharex=True, sharey='row', figsize=(figx,figy)) 
+		# plt.rc('text', usetex=True)
+		fig.subplots_adjust(wspace=0);fig.subplots_adjust(hspace=0)
+		plt.rc('font', family='serif',size=s)
+
+		for i in np.arange(5):
+			if i==0:
+				axarr[0,i].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+					left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+				axarr[1,i].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+					left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+				axarr[2,i].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+					left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+				axarr[3,i].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+					left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+
+				axarr[0,i].tick_params(axis='both',which='major',length=jtl)
+				axarr[1,i].tick_params(axis='both',which='major',length=jtl)
+				axarr[2,i].tick_params(axis='both',which='major',length=jtl)
+				axarr[3,i].tick_params(axis='both',which='major',length=jtl)
+			else:
+				axarr[0,i].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+					left=False, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+				axarr[1,i].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+					left=False, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+				axarr[2,i].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=False,
+					left=False, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+				axarr[3,i].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+					left=False, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+
+				axarr[0,i].tick_params(axis='both',which='major',length=jtl)
+				axarr[1,i].tick_params(axis='both',which='major',length=jtl)
+				axarr[2,i].tick_params(axis='both',which='major',length=jtl)
+				axarr[3,i].tick_params(axis='both',which='major',length=jtl)
+
+		return fig, axarr
+
+	elif n_panels=='6_by_5':
+		fig, axarr = plt.subplots(nrows=6, ncols=5, sharex=True, sharey='row', figsize=(figx,figy)) 
+		# plt.rc('text', usetex=True)
+		fig.subplots_adjust(wspace=0);fig.subplots_adjust(hspace=0)
+		plt.rc('font', family='serif',size=s)
+
+		for i in np.arange(6): #rows
+			for j in np.arange(5): #cols
+
+				if j==0: #first column - left label on
+					if i==5: #bottom row - bottom label on
+						axarr[i,j].tick_params(axis='both', which='both', top=True, labeltop=False, bottom=True, labelbottom=True,
+							left=True, labelleft=True, right=True, labelright=False, direction='in',labelsize=s,length=ntl)
+					else:
+						axarr[i,j].tick_params(axis='both', which='both', top=True, labeltop=False, bottom=True, labelbottom=False,
+							left=True, labelleft=True, right=True, labelright=False, direction='in',labelsize=s,length=ntl)
+
+				else:
+					if i==5: #bottom row - bottom label on
+						axarr[i,j].tick_params(axis='both', which='both', top=True, labeltop=False, bottom=True, labelbottom=True,
+							left=False, labelleft=True, right=True, labelright=False, direction='in',labelsize=s,length=ntl)
+					else:
+						axarr[i,j].tick_params(axis='both', which='both', top=True, labeltop=False, bottom=True, labelbottom=False,
+							left=False, labelleft=True, right=True, labelright=False, direction='in',labelsize=s,length=ntl)
+
+				axarr[i,j].tick_params(axis='both',which='major',length=jtl)
+
+		return fig, axarr
+
+	elif n_panels=='4_horiz':
+		fig, axarr = plt.subplots(nrows=1, ncols=4, sharey='row', figsize=(figx,figy)) 
+		# plt.rc('text', usetex=True)
+		fig.subplots_adjust(wspace=0);fig.subplots_adjust(hspace=0)
+		plt.rc('font', family='serif',size=s)
+
+		axarr[0].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		axarr[1].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+			left=False, right=False, labelleft=False, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		axarr[2].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+			left=False, right=False, labelleft=False, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		axarr[3].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+			left=False, right=True, labelleft=False, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		axarr[0].tick_params(axis='both',which='major',length=jtl)
+		axarr[1].tick_params(axis='both',which='major',length=jtl)
+		axarr[2].tick_params(axis='both',which='major',length=jtl)
+		axarr[3].tick_params(axis='both',which='major',length=jtl)
+
+		return fig, axarr
+
+	elif n_panels=='4_horiz_with_ratio':
+		fig, axarr = plt.subplots(nrows=2, ncols=4, sharex='col', sharey='row',  gridspec_kw = {'height_ratios':[height, 1]}, figsize=(figx,figy)) 
+		# plt.rc('text', usetex=True)
+		fig.subplots_adjust(wspace=0);fig.subplots_adjust(hspace=0)
+		plt.rc('font', family='serif',size=s)
+
+		# axarr[0].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+		# 	left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		# axarr[1].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+		# 	left=False, right=False, labelleft=False, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		# axarr[2].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+		# 	left=False, right=False, labelleft=False, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		# axarr[3].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+		# 	left=False, right=True, labelleft=False, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		# axarr[0].tick_params(axis='both',which='major',length=jtl)
+		# axarr[1].tick_params(axis='both',which='major',length=jtl)
+		# axarr[2].tick_params(axis='both',which='major',length=jtl)
+		# axarr[3].tick_params(axis='both',which='major',length=jtl)
 
 		return fig, axarr
 
@@ -283,15 +589,85 @@ def makefig(n_panels=1,height=2.5,figx=6,figy=6):
 
 		return fig, axarr
 
-	elif n_panels=='density thing':
-		fig, axarr = plt.subplots(nrows=2,ncols=1,figsize=(7,10))
+	elif n_panels=='2_proj_with_ticks':
+		fig, axarr = plt.subplots(nrows=1,ncols=2,figsize=(10,5))
+		# fig.subplots_adjust(wspace=0);fig.subplots_adjust(hspace=0)
 		plt.rc('font', family='serif', size=s)
 
-		axarr[0].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+		# axarr[0].tick_params(axis='both', which='both', top=False, bottom=False, labelbottom=False, labeltop=False,
+		# 	left=False, right=False, labelleft=False, labelright=False, direction='in',labelsize=s,length=ntl)
+		# axarr[1].tick_params(axis='both', which='both', top=False, bottom=False, labelbottom=False, labeltop=False,
+		# 	left=False, right=False, labelleft=False, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		for ax in axarr:
+			ax.tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
+					left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,
+					length=ntl)#,zorder=100)
+			ax.tick_params(axis='both',which='major',length=jtl)
+
+		return fig, axarr
+
+	elif n_panels=='density movie':
+		fig, axarr = plt.subplots(nrows=2,ncols=1,figsize=(5,8))
+		fig.subplots_adjust(wspace=0);fig.subplots_adjust(hspace=0)
+		plt.rc('font', family='serif', size=s)
+
+		axarr[0].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=False, labeltop=True,
 			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
 		axarr[1].tick_params(axis='both', which='both', top=True, bottom=True, labelbottom=True, labeltop=False,
 			left=True, right=True, labelleft=True, labelright=False, direction='in',labelsize=s,length=ntl)
 
+		return fig, axarr
+
+	elif n_panels=='10_proj':
+		fig, axarr = plt.subplots(nrows=2,ncols=5,sharex='col',sharey='row', figsize=(15,6))
+		fig.subplots_adjust(wspace=0);fig.subplots_adjust(hspace=0)
+		plt.rc('font', family='serif', size=s)
+
+		#--------
+		# axarr[0,0].tick_params(axis='both', which='both', top=False, bottom=False, labelbottom=False, labeltop=False,
+		# 	left=False, right=False, labelleft=False, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		for i in np.arange(2):
+			for j in np.arange(5):
+				axarr[i,j].tick_params(axis='both', which='both', top=False, bottom=False, labelbottom=False, labeltop=False,
+					left=False, right=False, labelleft=False, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		#--------
+		return fig, axarr
+
+	elif n_panels=='8_proj':
+		fig, axarr = plt.subplots(nrows=2,ncols=4,sharex='col',sharey='row', figsize=(12,6))
+		fig.subplots_adjust(wspace=0);fig.subplots_adjust(hspace=0)
+		plt.rc('font', family='serif', size=s)
+
+		#--------
+		# axarr[0,0].tick_params(axis='both', which='both', top=False, bottom=False, labelbottom=False, labeltop=False,
+		# 	left=False, right=False, labelleft=False, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		for i in np.arange(2):
+			for j in np.arange(4):
+				axarr[i,j].tick_params(axis='both', which='both', top=False, bottom=False, labelbottom=False, labeltop=False,
+					left=False, right=False, labelleft=False, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		#--------
+		return fig, axarr
+
+	elif n_panels=='4_proj':
+		fig, axarr = plt.subplots(nrows=2,ncols=2,sharex='col',sharey='row', figsize=(6,6))
+		fig.subplots_adjust(wspace=0);fig.subplots_adjust(hspace=0)
+		plt.rc('font', family='serif', size=s)
+
+		#--------
+		# axarr[0,0].tick_params(axis='both', which='both', top=False, bottom=False, labelbottom=False, labeltop=False,
+		# 	left=False, right=False, labelleft=False, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		for i in np.arange(2):
+			for j in np.arange(2):
+				axarr[i,j].tick_params(axis='both', which='both', top=False, bottom=False, labelbottom=False, labeltop=False,
+					left=False, right=False, labelleft=False, labelright=False, direction='in',labelsize=s,length=ntl)
+
+		#--------
 		return fig, axarr
 
 	else:
@@ -334,6 +710,8 @@ def clear_axes(ax):
 	ax.xaxis.set_major_formatter(StrMethodFormatter('{x:.0f}'))
 	ax.xaxis.set_minor_formatter(NullFormatter())
 
+def test_inspect():
+	print(inspect.stack()[1].function)
 
 
 

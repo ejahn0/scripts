@@ -20,7 +20,36 @@ to_Msun_kpc3 = (Mpc_km)**2 * (kg_Msun)**(-1) * (m_kpc)**3 # convert rho_crit to 
 
 species = np.array(['total Z','He','C','N','O','Ne','Mg','Si','S','Ca','Fe'])
 #                          total Z   He     C        N        O        Ne       Mg       Si       S        Ca       Fe
-SolarAbundances = np.array([0.02, 0.2485, 3.26e-3, 1.32e-3, 8.65e-3, 2.22e-3, 9.31e-4, 1.08e-3, 6.44e-4, 1.01e-4, 1.73e-3])
+# SolarAbundances = np.array([0.02, 0.2485, 3.26e-3, 1.32e-3, 8.65e-3, 2.22e-3, 9.31e-4, 1.08e-3, 6.44e-4, 1.01e-4, 1.73e-3])
+#                 species:  all   He    C        N        O        Ne       Mg       Si       S        Ca       Fe
+species = np.array([       'all', 'He', 'C',     'N',     'O',     'Ne',    'Mg',    'Si',    'S',     'Ca',    'Fe'])
+SolarAbundances = np.array([0.02, 0.28, 3.26e-3, 1.23e-3, 8.65e-3, 2.22e-3, 9.31e-4, 1.08e-3, 6.44e-4, 1.01e-4, 1.73e-3 ])
+
+mass_all = np.nan #no atomic mass for multiple species
+# mass_H  = 8.41833156e-58 #solar masses
+# mass_He = 3.34256681e-57 
+# mass_C  = 1.003046076e-56
+# mass_N  = 1.169725984e-56
+# mass_O  = 1.336074075e-56
+# mass_Ne = 1.68520266e-56
+# mass_Mg = 2.02971396e-56
+# mass_Si = 2.34538299e-56
+# mass_S  = 2.67753453e-56
+# mass_Ca = 3.34691817e-56
+# mass_Fe = 4.66359312e-56
+mass_H  = 1.674e-27 #kilograms
+mass_He = 6.646477e-27
+mass_C  = 1.9945e-26
+mass_N  = 2.3259e-26
+mass_O  = 2.6567e-26
+mass_Ne = 3.35092e-26
+mass_Mg = 4.0359e-26
+mass_Si = 4.6636e-26
+mass_S  = 5.324e-26
+mass_Ca = 6.6551e-26
+mass_Fe = 9.2733e-26
+atomic_masses = np.array([mass_all,mass_He,mass_C,mass_N,mass_O,mass_Ne,mass_Mg,mass_Si,mass_S,mass_Ca,mass_Fe])
+
 m12sims = np.array(['m12b_res7100','m12c_res7100','m12f_res7100','m12i_res7100','m12m_res7100','m12r_res7100','m12w_res7100'])
 m12minVmax = np.array([4.2,4.0,4.0,4.0,4.3,4.1,4.5])
 
@@ -50,7 +79,7 @@ def get_snapnum(z):
 	return str(int(snapnums[np.where(redshifts == find_nearest(redshifts, z))[0][0]])).zfill(3)
 
 def get_snapz(num):
-	snapnums = np.loadtxt(d.fileno_dir, dtype=float, delimiter=' ', usecols=[0])
+	snapnums = np.loadtxt(d.fileno_dir, dtype=int, delimiter=' ', usecols=[0])
 	redshifts = np.loadtxt(d.fileno_dir, dtype=float, delimiter=' ', usecols=[1])
 	return redshifts[np.where(snapnums == num)[0][0]]
 
@@ -63,9 +92,22 @@ def find_nearest(array, value, getindex=False):
     else:
     	return array[idx]
 
-def scinote(n,digits=2):
-	if n>0:
-		return str(np.round(10**(np.log10(n) % 1), digits))+'e'+str(np.int(np.log10(n)))
+def scinote(n,digits=3):
+	# if (n>0) & (np.log10(n) > 0):
+	# 	return str(np.round(10**(np.log10(n) % 1), digits))+'e'+str(np.int(np.log10(n)))
+	
+	if (n >= 0):
+		n_sign = ''
+	elif (n < 0):
+		n_sign = '-'
+	n = np.abs(n)
+
+	if (np.log10(n) >= 0):
+		return n_sign+str(np.round(10**(np.log10(n) % 1), digits))+'e'+str(np.int(np.log10(n)))
+	elif (np.log10(n) < 0):
+		return n_sign+str(np.round(10**(np.log10(n) % 1), digits))+'e'+str(np.int(np.log10(n))-1)
+
+
 	elif n==np.nan:
 		return 'nan'
 	elif n==np.inf:
@@ -75,11 +117,10 @@ def scinote(n,digits=2):
 	elif n==0:
 		return '0'
 	else:
-		n = np.abs(n)
-		return '-'+str(np.round(10**(np.log10(n) % 1), digits))+'e'+str(np.int(np.log10(n)))
+		raise ValueError('unknown format: '+str(n)+' '+str(type(n)))
 
-def time(scalefactor,sim):
-	h, omega_m, omega_l = cat.read(sim,0,'cosmology:hubble','cosmology:omega_matter','cosmology:omega_lambda')
+def time(scalefactor,sim,suite):
+	h, omega_m, omega_l = cat.read(sim,0,suite,'cosmology:hubble','cosmology:omega_matter','cosmology:omega_lambda')
 	H0 = 100*h; H0G = H0*to_Gyr
 	return 2. / (3.*H0G*(np.sqrt(omega_l)))*np.arcsinh( np.sqrt(omega_l/omega_m)*(scalefactor**1.5) )
 
@@ -109,4 +150,36 @@ def dynamical_time(r,vc):
 	tdyn = (2*np.pi*r*kpc_to_km/vc)/(3.154e7)
 
 	return tdyn
+
+def tostring(array):
+	if array.shape==(1,):
+		arstr = str(array[0])
+
+	elif (len(array.shape)==1) and (array.shape[0] > 1):
+		arstr = ''
+		x = array.shape[0] 
+		for i in np.arange(x):
+			if not(i==x-1):
+				arstr += str(array[i]) + ', '
+			else:
+				arstr += str(array[i])
+
+
+	elif len(array.shape)==2:
+		arstr = ''
+		x,y = array.shape
+		for i in np.arange(x):
+			for j in np.arange(y):
+				
+				if not((i,j) == (x-1,y-1)): 
+					arstr += str(array[i,j]) + ', '
+				else: 
+					arstr += str(array[i,j])
+
+	elif len(array.shape)>2:
+		raise ValueError('too many dimensions to convert to string')
+
+	return arstr
+	
+
 

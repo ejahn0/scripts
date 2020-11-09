@@ -12,9 +12,20 @@ if hostname=='master':
 	fileno_dir = '/home/ejahn003/scripts/utilities/reference/fileno_redshift.txt'
 	smuggledir = '/mainvol/ejahn/smuggle/output/live_halo_02.2020/'
 	projdir = '/home/ejahn003/projections/'
+	firedir = '/mainvol/ejahn/fire/'
 
 
-#-lenovo-laptop-------------------------------------------------------
+#-stampede------------------------------------------------------------
+elif 'stampede2.tacc.utexas.edu' in hostname:
+	firedir = '/scratch/projects/xsede/GalaxiesOnFIRE/'
+	datdir='/home1/05033/ejahn/data/plots/hdf5/'
+	helpdir = '/home1/05033/scripts/utilities/helpers/'
+	plotdir='/home1/05033/ejahn/plots/'
+	fileno_dir = '/home1/05033/ejahn/scripts/utilities/reference/fileno_redshift.txt'
+	refdir = '/home1/05033/ejahn/scripts/utilities/reference/'
+
+
+#-laptop--------------------------------------------------------------
 elif hostname=='peregrin' or hostname=='eostrix':
 	catdir = '/run/media/ethan/Watson/big_data/catalogs/'
 	datdir = '/home/ethan/research/data/plots/hdf5/'
@@ -24,6 +35,7 @@ elif hostname=='peregrin' or hostname=='eostrix':
 	snapdir = '/run/media/ethan/Watson/big_data/snapshots/'
 	fileno_dir = '/home/ethan/research/scripts/utilities/reference/fileno_redshift.txt'
 	obsdir = '/home/ethan/research/data/observations/'
+	firedir = '/run/media/ethan/Extreme SSD/research/data/fire/'
 
 
 #-office-desktop------------------------------------------------------
@@ -36,8 +48,7 @@ elif hostname=='anattmux':
 	refdir = '/home/ethan/research/scripts/reference/'
 	snapdir = '/home/ethan/big_data/snapshots/'
 
-
 #---------------------------------------------------------------------
 else:
-	raise ValueError('unknown host! where is my data? :(')
+	raise ValueError('unknown host! :(')
 
